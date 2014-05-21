@@ -1,0 +1,173 @@
+#!/usr/bin/python3
+
+import os, sys
+import psutil
+import configparser
+import subprocess
+from datetime import datetime, timedelta
+
+CNF_DIR = "/etc/pl_sys_mon"
+CNF_FILE = os.path.join(CNF_DIR, "config.cnf")
+
+if not os.path.exists(CNF_DIR):
+	os.mkdir(CNF_DIR)
+elif not os.path.isdir(CNF_DIR):
+	print("{0} is not a directory!".format(CNF_DIR))
+	sys.exit(1)
+
+CNF = configparser.ConfigParser()
+if os.path.isfile(CNF_FILE):
+	CNF.read(CNF_FILE)
+
+def checkConfig(config):
+	edited = False
+
+	if not 'general' in config:
+		config['general'] = {}
+
+	if not 'cpu' in config:
+		config['cpu'] = {}
+
+	if not 'processes' in config:
+		config['processes'] = {}
+
+	if not 'network' in config:
+		config['network'] = {}
+
+	if not "idle" in config:
+		config['idle'] = {}
+
+	if not "total_load" in config['cpu']:
+		if "per_cpu_load" in config['cpu']:
+			config['cpu']['total_load'] = str(float(config['cpu']['per_cpu_load']) * os.cpu_count())
+		else:
+			config["cpu"]["total_load"] = str(10)
+		edited = True
+
+	if not "per_cpu_load" in config['cpu']:
+		config['cpu']['per_cpu_load'] = str(float(config['cpu']['total_load']) / os.cpu_count())
+		edited = True
+
+
+	if not "period" in config['general']:
+		config['general']['period'] = str(5)
+		edited = True
+
+	if not "idle_time" in config['general']:
+		config['general']['idle_time'] = str(1)
+		edited = True
+
+
+	if not "download_speed" in config['network']:
+		config['network']['download_speed'] = str(10 * 1024)
+		edited = True
+
+	if not "upload_speed" in config['network']:
+		config['network']['upload_speed'] = str(10 * 1024)
+		edited = True
+
+
+	if not "processes" in config['processes']:
+		config['processes']['processes'] = ""
+		edited = True
+
+	if not "cmd" in config['idle']:
+		config['idle']['cmd'] = ""
+		edited = True
+
+	if edited:
+		with open(CNF_FILE, "w") as configfile:
+			config.write(configfile)
+
+
+def checkCpu(config):
+	total_cpu_threshold = float(config['cpu'].get("total_load"))
+	per_cpu_threshold = float(config['cpu'].get("per_cpu_load"))
+	time_span = int(config['general'].get("period"))
+
+	per_cpu = psutil.cpu_percent(time_span, True)
+	total_cpu = 0
+	per_cpu_alive = False
+	for cpu in per_cpu:
+		total_cpu += cpu
+		if cpu >= per_cpu_threshold:
+			per_cpu_alive = True
+
+	return (total_cpu >= total_cpu_threshold or per_cpu_alive, per_cpu)
+
+def checkNetwork(config, prev_recv, prev_send):
+	dl_threshold = float(config['network'].get("download_speed", 10)) * 1024
+	up_threshold = float(config['network'].get("upload_speed", 10)) * 1024
+	time_span = int(config['general'].get("period", 5))
+
+	network = psutil.net_io_counters(True)
+	network_dl = 0
+	network_up = 0
+
+	for k in network:
+		if k != "lo":
+			network_dl += network[k].bytes_recv
+			network_up += network[k].bytes_sent
+
+	dl = (network_dl - prev_recv) / time_span
+	up = (network_up - prev_send) / time_span
+
+	return (dl >= dl_threshold and up >= up_threshold, network_dl, network_up, dl, up)
+
+def checkProcesses(config):
+	s_processes = config['processes'].get("processes", "").strip()
+	if s_processes:
+		tmp_processes = s_processes.split(";")
+		processes = {}
+		for p in tmp_processes:
+			p_data = {}
+			p_data['count'] = 0
+			p_data['min'] = int(config['processes'].get(p.strip() + "_count", 1))
+			processes[p.strip()] = p_data
+
+		for p in psutil.process_iter():
+			if p.name in processes:
+				p_data = processes[p.name]
+				p_data['count'] += 1
+				if p_data['count'] >= p_data['min']:
+					return (True, p.name, p_data) 
+
+	return (False, None, None)
+
+def main():
+	global CNF
+
+	shutdown = False
+
+	checkConfig(CNF)
+
+	idle_time = int(CNF['general'].get("idle_time", 1))
+	current_shutdown_time = datetime.now() + timedelta(minutes=idle_time)
+
+	dl = 0
+	up = 0
+
+	(_, dl, up, _, _) = checkNetwork(CNF, dl, up)
+
+	while datetime.now() < current_shutdown_time:
+		(cpu_alive, cpu) = checkCpu(CNF)
+		(net_alive, dl, up, dl_speed, up_speed) = checkNetwork(CNF, dl, up)
+		(process_alive, process, p_data) = checkProcesses(CNF)
+
+		shutdown = not (cpu_alive or net_alive or process_alive)
+		if not shutdown:
+			current_shutdown_time = datetime.now() + timedelta(minutes=idle_time)
+			print("Delay shutdown until {0}".format(current_shutdown_time))
+			print("Checks:")
+			print("  cpu [{0}]: {1}".format(cpu_alive, cpu))
+			print("  network [{0}]: dl {1}, up {2}".format(net_alive, dl_speed, up_speed))
+			print("  process [{0}]: {1}".format(process_alive, process))
+
+	cmd = CNF['idle'].get("cmd", "")
+	if cmd:
+		subprocess.call([ "sh", "-c", cmd ])
+	else:
+		print("No idle command specified")
+
+if __name__ == "__main__":
+	main()
