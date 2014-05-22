@@ -78,11 +78,11 @@ def checkConfig(config):
 
 
 	if not "period" in config['general']:
-		config['general']['period'] = str(5)
+		config['general']['period'] = str(10)
 		edited = True
 
 	if not "idle_time" in config['general']:
-		config['general']['idle_time'] = str(1)
+		config['general']['idle_time'] = str(15)
 		edited = True
 
 
@@ -98,6 +98,13 @@ def checkConfig(config):
 	if not "processes" in config['processes']:
 		config['processes']['processes'] = ""
 		edited = True
+	else:
+		processes = config['processes']['processes'].split(";")
+		if len(processes) > 0:
+			for p in processes:
+				if not (p + "_count") in config['processes']:
+					config['processes'][p + "_min"] = str(1)
+					edited = True
 
 	if not "cmd" in config['idle']:
 		config['idle']['cmd'] = ""
@@ -153,7 +160,7 @@ def checkProcesses(config):
 		for p in tmp_processes:
 			p_data = {}
 			p_data['count'] = 0
-			p_data['min'] = int(config['processes'].get(p.strip() + "_count", 1))
+			p_data['min'] = int(config['processes'].get(p.strip() + "_min", 1))
 			processes[p.strip()] = p_data
 
 		for p in psutil.process_iter():
