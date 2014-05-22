@@ -9,14 +9,36 @@ from datetime import datetime, timedelta
 CNF_DIR = "/etc/pl_sys_mon"
 CNF_FILE = os.path.join(CNF_DIR, "config.cnf")
 
+LOG_FILE = "/var/log/pl_sys_monitor.log"
+
+
+def log(msg):
+	global LOG_FILE
+	
+	if os.path.exists(LOG_FILE):
+		with open(LOG_FILE, "r") as log:
+			content = log.readlines()
+	else:
+		content = []
+
+	new_lines = msg.split("\n")
+	content = content + new_lines
+	if len(content) < 200:
+		with open(LOG_FILE, "a") as log:
+			log.write(msg)
+	else:
+		with open(LOG_FILE, "w") as log:
+			log.write("\n".join(content[len(content)-150:]))
+
 if not os.path.exists(CNF_DIR):
 	os.mkdir(CNF_DIR)
 elif not os.path.isdir(CNF_DIR):
-	print("{0} is not a directory!".format(CNF_DIR))
+	log("{0} is not a directory!\n".format(CNF_DIR))
 	sys.exit(1)
 
 CNF = configparser.ConfigParser()
 if os.path.isfile(CNF_FILE):
+	log("Reading config file {0}\n".format(CNF_FILE))
 	CNF.read(CNF_FILE)
 
 def checkConfig(config):
@@ -76,6 +98,9 @@ def checkConfig(config):
 		edited = True
 
 	if edited:
+		global CNF_FILE
+
+		log("Generating default config file {0}\n".format(CNF_FILE))
 		with open(CNF_FILE, "w") as configfile:
 			config.write(configfile)
 
@@ -112,7 +137,7 @@ def checkNetwork(config, prev_recv, prev_send):
 	dl = (network_dl - prev_recv) / time_span
 	up = (network_up - prev_send) / time_span
 
-	return (dl >= dl_threshold and up >= up_threshold, network_dl, network_up, dl, up)
+	return (dl >= dl_threshold and up >= up_threshold, network_dl, network_up, dl / 1024, up / 1024)
 
 def checkProcesses(config):
 	s_processes = config['processes'].get("processes", "").strip()
@@ -157,17 +182,21 @@ def main():
 		shutdown = not (cpu_alive or net_alive or process_alive)
 		if not shutdown:
 			current_shutdown_time = datetime.now() + timedelta(minutes=idle_time)
-			print("Delay shutdown until {0}".format(current_shutdown_time))
-			print("Checks:")
-			print("  cpu [{0}]: {1}".format(cpu_alive, cpu))
-			print("  network [{0}]: dl {1}, up {2}".format(net_alive, dl_speed, up_speed))
-			print("  process [{0}]: {1}".format(process_alive, process))
+			msg = "Delay shutdown until {0}\n".format(current_shutdown_time)
+			msg += "Checks:\n"
+			msg += "  cpu [{0}]: {1}\n".format(cpu_alive, cpu)
+			msg += "  network [{0}]: dl {1}, up {2}\n".format(net_alive, dl_speed, up_speed)
+			msg += "  process [{0}]: {1}\n".format(process_alive, process)
+			log(msg)
 
 	cmd = CNF['idle'].get("cmd", "")
 	if cmd:
+		log("Executing idle command: {0}\n".format(cmd))
 		subprocess.call([ "sh", "-c", cmd ])
 	else:
-		print("No idle command specified")
+		log("No idle command specified\n")
+
+	log("End script\n")
 
 if __name__ == "__main__":
 	main()
