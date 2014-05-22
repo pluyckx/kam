@@ -14,21 +14,27 @@ LOG_FILE = "/var/log/pl_sys_monitor.log"
 
 def log(msg):
 	global LOG_FILE
-	
+
+	content = []	
+
 	if os.path.exists(LOG_FILE):
 		with open(LOG_FILE, "r") as log:
-			content = log.readlines()
-	else:
-		content = []
+			for line in log:
+				content.append(line.strip("\n"))
+
+	msg = str(datetime.now()) + "\n" + msg
 
 	new_lines = msg.split("\n")
-	content = content + new_lines
-	if len(content) < 200:
+	new_content = content + new_lines
+	if len(new_content) < 200:
+		print("Write {0}".format(len(new_content)))
 		with open(LOG_FILE, "a") as log:
 			log.write(msg)
 	else:
+		start = len(new_content) - 150
+		print("Write {0} lines".format(len(new_content) - start))
 		with open(LOG_FILE, "w") as log:
-			log.write("\n".join(content[len(content)-150:]))
+			log.write("\n".join(new_content[start:]))
 
 if not os.path.exists(CNF_DIR):
 	os.mkdir(CNF_DIR)
