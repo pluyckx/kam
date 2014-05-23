@@ -102,7 +102,7 @@ def checkConfig(config):
 		processes = config['processes']['processes'].split(";")
 		if len(processes) > 0:
 			for p in processes:
-				if not (p + "_count") in config['processes']:
+				if not (p + "_min") in config['processes']:
 					config['processes'][p + "_min"] = str(1)
 					edited = True
 
