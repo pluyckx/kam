@@ -22,7 +22,7 @@ def log(msg):
 			for line in log:
 				content.append(line.strip("\n"))
 
-	msg = str(datetime.now()) + "\n" + msg
+	msg = "On " + str(datetime.now()) + "\n" + msg
 
 	new_lines = msg.split("\n")
 	new_content = content + new_lines
