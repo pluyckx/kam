@@ -36,17 +36,6 @@ def log(msg):
 		with open(LOG_FILE, "w") as log:
 			log.write("\n".join(new_content[start:]))
 
-if not os.path.exists(CNF_DIR):
-	os.mkdir(CNF_DIR)
-elif not os.path.isdir(CNF_DIR):
-	log("{0} is not a directory!\n".format(CNF_DIR))
-	sys.exit(1)
-
-CNF = configparser.ConfigParser()
-if os.path.isfile(CNF_FILE):
-	log("Reading config file {0}\n".format(CNF_FILE))
-	CNF.read(CNF_FILE)
-
 def checkConfig(config):
 	edited = False
 
@@ -210,6 +199,18 @@ def main():
 		log("No idle command specified\n")
 
 	log("End script\n")
+
+
+if not os.path.exists(CNF_DIR):
+	os.mkdir(CNF_DIR)
+elif not os.path.isdir(CNF_DIR):
+	log("{0} is not a directory!\n".format(CNF_DIR))
+	sys.exit(1)
+
+CNF = configparser.ConfigParser()
+if os.path.isfile(CNF_FILE):
+	log("Reading config file {0}\n".format(CNF_FILE))
+	CNF.read(CNF_FILE)
 
 if __name__ == "__main__":
 	main()
