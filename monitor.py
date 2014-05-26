@@ -6,10 +6,10 @@ import configparser
 import subprocess
 from datetime import datetime, timedelta
 
-CNF_DIR = "/etc/pl_sys_mon"
+CNF_DIR = "/etc/kam"
 CNF_FILE = os.path.join(CNF_DIR, "config.cnf")
 
-LOG_FILE = "/var/log/pl_sys_monitor.log"
+LOG_FILE = "/var/log/kam.log"
 
 
 def log(msg):
@@ -67,7 +67,7 @@ def checkConfig(config):
 
 
 	if not "period" in config['general']:
-		config['general']['period'] = str(10)
+		config['general']['period'] = str(60)
 		edited = True
 
 	if not "idle_time" in config['general']:
@@ -76,11 +76,11 @@ def checkConfig(config):
 
 
 	if not "download_speed" in config['network']:
-		config['network']['download_speed'] = str(10 * 1024)
+		config['network']['download_speed'] = str(10)
 		edited = True
 
 	if not "upload_speed" in config['network']:
-		config['network']['upload_speed'] = str(10 * 1024)
+		config['network']['upload_speed'] = str(10)
 		edited = True
 
 
@@ -96,7 +96,7 @@ def checkConfig(config):
 					edited = True
 
 	if not "cmd" in config['idle']:
-		config['idle']['cmd'] = ""
+		config['idle']['cmd'] = "shutdown -h now"
 		edited = True
 
 	if edited:
