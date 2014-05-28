@@ -27,12 +27,10 @@ def log(msg):
 	new_lines = msg.split("\n")
 	new_content = content + new_lines
 	if len(new_content) < 200:
-		print("Write {0}".format(len(new_content)))
 		with open(LOG_FILE, "a") as log:
 			log.write(msg)
 	else:
 		start = len(new_content) - 150
-		print("Write {0} lines".format(len(new_content) - start))
 		with open(LOG_FILE, "w") as log:
 			log.write("\n".join(new_content[start:]))
 
@@ -213,4 +211,7 @@ if os.path.isfile(CNF_FILE):
 	CNF.read(CNF_FILE)
 
 if __name__ == "__main__":
-	main()
+	### fork the process so it is a daemon
+	pid = os.fork()
+	if pid == 0:
+		main()

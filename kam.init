@@ -19,16 +19,18 @@
 
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
-DESC="Monitor that executes a command when the computer is idle for a long time"
+DESC="Keep Alive Monitor (KAM) monitors some performance parameters and services. When those are idle, a specified command is executed."
 NAME=kamd
 DAEMON=/usr/sbin/$NAME
-SCRIPTNAME=/etc/init.d/kam
+DAEMON_ARGS=""
+SCRIPTNAME=/etc/init.d/$NAME
 
 # Exit if the package is not installed
-[ -x "$DAEMON" ] || exit 0
-
-# Read configuration variable file if it is present
-[ -r /etc/default/$NAME ] && . /etc/default/$NAME
+if [ ! -x "$DAEMON" ]
+then
+	echo "$DAEMON not found"
+	exit 0
+fi
 
 # Load the VERBOSE setting and other rcS variables
 . /lib/init/vars.sh
@@ -47,8 +49,28 @@ do_start()
 	#   0 if daemon has been started
 	#   1 if daemon was already running
 	#   2 if daemon could not be started
-	$DAEMON > /dev/null&
-	
+	log_daemon_msg "Starting $NAME"
+	ps -e | grep $NAME 2>&1 > /dev/null
+	ret=$?
+
+	if [ $ret -eq 0 ]
+	then
+		log_end_msg 1
+		log_daemon_msg "Already running"
+		return 1
+	fi
+
+	start-stop-daemon --start --quiet --exec $DAEMON -- $DAEMON_ARGS
+
+	ret=$?
+	if [ $ret -ne 0 ]
+	then
+		log_end_msg 1
+		log_daemon_msg "$ret: Could not start daemon"
+	else
+		log_end_msg 0
+	fi
+
 	# Add code here, if necessary, that waits for the process to be ready
 	# to handle requests from services started subsequently which depend
 	# on this one.  As a last resort, sleep for some time.
@@ -64,15 +86,40 @@ do_stop()
 	#   1 if daemon was already stopped
 	#   2 if daemon could not be stopped
 	#   other if a failure occurred
-	killall $NAME
+	log_daemon_msg "Stopping $NAME"
+
+	ps -e | grep $NAME 2>&1 > /dev/null
+	if [ $? -eq 1 ]
+	then
+		log_end_msg 1
+		log_daemon_msg "$NAME not running"
+		return 1
+	fi
+
+	start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --name $NAME
 	RETVAL="$?"
-	[ "$RETVAL" = 2 ] && return 2
+	if [ $RETVAL -eq 2 ]
+	then
+		log_end_msg 1
+		return 2
+	fi
 	# Wait for children to finish too if this is a daemon that forks
 	# and if the daemon is only ever run from this initscript.
 	# If the above conditions are not satisfied then add some other code
 	# that waits for the process to drop all resources that could be
 	# needed by services started subsequently.  A last resort is to
 	# sleep for some time.
+	start-stop-daemon --stop --quiet --oknodo --retry=0/30/KILL/5 --exec $DAEMON
+	if [ $? -eq 2 ]
+	then
+		log_end_msg 1
+		return 2
+	fi
+
+	log_end_msg 0
+
+	# Many daemons don't delete their pidfiles when they exit.
+	rm -f $PIDFILE
 	return "$RETVAL"
 }
 
@@ -85,53 +132,58 @@ do_reload() {
 	# restarting (for example, when it is sent a SIGHUP),
 	# then implement that here.
 	#
-	return 0
+	do_stop
+	if [ $? -eq 2 ]
+	then
+		return 2
+	fi
+	do_start
+	return $?
 }
 
 case "$1" in
   start)
-	[ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC" "$NAME"
 	do_start
-	case "$?" in
-		0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
-		2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
-	esac
 	;;
   stop)
-	[ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" "$NAME"
 	do_stop
-	case "$?" in
-		0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
-		2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
-	esac
 	;;
   status)
 	status_of_proc "$DAEMON" "$NAME" && exit 0 || exit $?
 	;;
-#  reload|force-reload)
+  restart|reload|force-reload)
 	#
 	# If do_reload() is not implemented then leave this commented out
 	# and leave 'force-reload' as an alias for 'restart'.
 	#
 	#log_daemon_msg "Reloading $DESC" "$NAME"
-	#do_reload
+	do_reload
 	#log_end_msg $?
-	#;;
-#	do_stop
-#	do_start
-  restart|reload|force-reload)
+	;;
+#  restart)
 	#
 	# If the "reload" option is implemented then remove the
 	# 'force-reload' alias
 	#
-	log_daemon_msg "Restarting $DESC" "$NAME"
-	do_stop
-	do_start
-	log_end_msg 0
-	;;
+#	do_stop
+#	case "$?" in
+#	  0|1)
+#		do_start
+#		case "$?" in
+#			0) log_end_msg 0 ;;
+#			1) log_end_msg 1 ;; # Old process is still running
+#			*) log_end_msg 1 ;; # Failed to start
+#		esac
+#		;;
+#	  *)
+#		# Failed to stop
+#		log_end_msg 1
+#		;;
+#	esac
+#	;;
   *)
 	#echo "Usage: $SCRIPTNAME {start|stop|restart|reload|force-reload}" >&2
-	echo "Usage: $SCRIPTNAME {start|stop|status|restart}" >&2
+	echo "Usage: $SCRIPTNAME {start|stop|status|restart|reload|force-reload}" >&2
 	exit 3
 	;;
 esac

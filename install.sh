@@ -27,21 +27,19 @@ fi
 
 if [[ $python_available -eq 0 || $psutil_available -eq 0 ]]
 then
-	echo "Installing necessary packages"
-
 	packages=""
 
 	if [[ $python_available -eq 0 ]]
 	then
-		echo "Installing python3"
 		packages="$packages python3"
 	fi
 
 	if [[ $psutils_available -eq 0 ]]
 	then
-		echo "Installing psutil for python3"
 		packages="$packages python3-psutil"
 	fi
+
+	echo "Installing necessary packages: $packages"
 
 	apt-get install $packages
 fi
@@ -50,7 +48,7 @@ echo "Installing monitor.py to /usr/bin/kamd"
 cp monitor.py /usr/sbin/kamd
 
 echo "Installing init script to /etc/init.d"
-cp kam /etc/init.d/
+cp kam.init /etc/init.d/kam
 
 echo "Update rc.d"
 update-rc.d kam defaults
