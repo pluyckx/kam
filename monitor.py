@@ -4,6 +4,7 @@ import os, sys
 import psutil
 import configparser
 import subprocess
+import signal
 from datetime import datetime, timedelta
 
 CNF_DIR = "/etc/kam"
@@ -162,39 +163,40 @@ def checkProcesses(config):
 def main():
 	global CNF
 
-	shutdown = False
+	while True:
+		shutdown = False
 
-	checkConfig(CNF)
+		checkConfig(CNF)
 
-	idle_time = int(CNF['general'].get("idle_time", 1))
-	current_shutdown_time = datetime.now() + timedelta(minutes=idle_time)
+		idle_time = int(CNF['general'].get("idle_time", 1))
+		current_shutdown_time = datetime.now() + timedelta(minutes=idle_time)
 
-	dl = 0
-	up = 0
+		dl = 0
+		up = 0
 
-	(_, dl, up, _, _) = checkNetwork(CNF, dl, up)
+		(_, dl, up, _, _) = checkNetwork(CNF, dl, up)
 
-	while datetime.now() < current_shutdown_time:
-		(cpu_alive, cpu) = checkCpu(CNF)
-		(net_alive, dl, up, dl_speed, up_speed) = checkNetwork(CNF, dl, up)
-		(process_alive, process, p_data) = checkProcesses(CNF)
+		while datetime.now() < current_shutdown_time:
+			(cpu_alive, cpu) = checkCpu(CNF)
+			(net_alive, dl, up, dl_speed, up_speed) = checkNetwork(CNF, dl, up)
+			(process_alive, process, p_data) = checkProcesses(CNF)
 
-		shutdown = not (cpu_alive or net_alive or process_alive)
-		if not shutdown:
-			current_shutdown_time = datetime.now() + timedelta(minutes=idle_time)
-			msg = "Delay shutdown until {0}\n".format(current_shutdown_time)
-			msg += "Checks:\n"
-			msg += "  cpu [{0}]: {1}\n".format(cpu_alive, cpu)
-			msg += "  network [{0}]: dl {1}, up {2}\n".format(net_alive, dl_speed, up_speed)
-			msg += "  process [{0}]: {1}\n".format(process_alive, process)
-			log(msg)
+			shutdown = not (cpu_alive or net_alive or process_alive)
+			if not shutdown:
+				current_shutdown_time = datetime.now() + timedelta(minutes=idle_time)
+				msg = "Delay shutdown until {0}\n".format(current_shutdown_time)
+				msg += "Checks:\n"
+				msg += "  cpu [{0}]: {1}\n".format(cpu_alive, cpu)
+				msg += "  network [{0}]: dl {1}, up {2}\n".format(net_alive, dl_speed, up_speed)
+				msg += "  process [{0}]: {1}\n".format(process_alive, process)
+				log(msg)
 
-	cmd = CNF['idle'].get("cmd", "")
-	if cmd:
-		log("Executing idle command: {0}\n".format(cmd))
-		subprocess.call([ "sh", "-c", cmd ])
-	else:
-		log("No idle command specified\n")
+		cmd = CNF['idle'].get("cmd", "")
+		if cmd:
+			log("Executing idle command: {0}\n".format(cmd))
+			subprocess.call([ "sh", "-c", cmd ])
+		else:
+			log("No idle command specified\n")
 
 	log("End script\n")
 
