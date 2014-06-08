@@ -138,7 +138,7 @@ def checkNetwork(config, prev_recv, prev_send):
 	dl = (network_dl - prev_recv) / time_span
 	up = (network_up - prev_send) / time_span
 
-	return (dl >= dl_threshold and up >= up_threshold, network_dl, network_up, dl / 1024, up / 1024)
+	return (dl >= dl_threshold or up >= up_threshold, network_dl, network_up, dl / 1024, up / 1024)
 
 def checkProcesses(config):
 	s_processes = config['processes'].get("processes", "").strip()
