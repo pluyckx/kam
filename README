@@ -57,8 +57,23 @@ download_speed = 10
 	{x KiB/s}
 	When the download speed reaches this value, the computer is not idle.
 upload_speed = 10
-	(x KiB/s}
+	{x KiB/s}
 	When the upload speed reaches this value, the computer is not idle.
+
+addresses_connected = 
+	{list of addresses}
+	Here you can define a list of addresses. When one of these addresses are
+	connected, the server is kept alive. You can define a specific address, eg:
+	192.168.1.5
+	or you can define the whole subnet with a 255.255.255.0 mask:
+	192.168.1.0
+		or
+	192.168.1.255
+
+	When an address ends with 0 or 255, the last number is ignored and all numbers
+	matches this address. So when specifying '192.168.1.0' or '192.168.1.255', all
+	addresses 192.168.1.x keep the server alive. This is handy when you have a local
+	network and when a computer is connected to the server, the server must kept alive.
 
 [idle]
 	Here you can define stuff to do when the computer is idle for
