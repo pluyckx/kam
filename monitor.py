@@ -15,8 +15,6 @@ LOG_FILE = "/var/log/kam.log"
 
 
 def log(msg):
-	global LOG_FILE
-
 	content = []	
 
 	if os.path.exists(LOG_FILE):
@@ -104,8 +102,6 @@ def checkConfig(config):
 		edited = True
 
 	if edited:
-		global CNF_FILE
-
 		log("Generating default config file {0}\n".format(CNF_FILE))
 		with open(CNF_FILE, "w") as configfile:
 			config.write(configfile)
@@ -188,8 +184,6 @@ def checkProcesses(config):
 	return (False, None, None)
 
 def main():
-	global CNF
-
 	while True:
 		shutdown = False
 
