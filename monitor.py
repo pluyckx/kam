@@ -2,6 +2,7 @@
 
 import os, sys
 import psutil
+import re
 import configparser
 import subprocess
 import signal
@@ -82,6 +83,10 @@ def checkConfig(config):
 		config['network']['upload_speed'] = str(10)
 		edited = True
 
+	if not "addresses_connected" in config['network']:
+		config['network']['addresses_connected'] = ""
+		edited = True
+
 
 	if not "processes" in config['processes']:
 		config['processes']['processes'] = ""
@@ -140,6 +145,28 @@ def checkNetwork(config, prev_recv, prev_send):
 
 	return (dl >= dl_threshold or up >= up_threshold, network_dl, network_up, dl / 1024, up / 1024)
 
+def checkConnections(config):
+	addresses = config['network'].get("addresses_connected", "").split(",")
+	if len(addresses) > 0:
+		netstat_out = subprocess.getoutput("netstat --inet -a | grep ESTABLISHED | awk '{print $5}' | grep '192.168.0'")
+		connections = netstat_out.split("\n")
+		for i in range(0, len(connections)):
+			connections[i] = connections[i][:connections[i].find(":")]
+		for i in range(0, len(addresses)):
+			address = addresses[i]
+			if re.search("^[0-9]{1,3}(\.[0-9]{1,3}){3}$", address):
+				if address.endswith(".0") or address.endswith(".255"):
+					address = address[:address.rfind(".")]
+
+			for connection in connections:
+				if connection.startswith(address):
+					return (True, connection, addresses[i])
+			else:
+				log("Invalid address: {0}\n".format(address))
+
+		return (False, None)
+	
+
 def checkProcesses(config):
 	s_processes = config['processes'].get("processes", "").strip()
 	if s_processes:
@@ -180,8 +207,9 @@ def main():
 			(cpu_alive, cpu) = checkCpu(CNF)
 			(net_alive, dl, up, dl_speed, up_speed) = checkNetwork(CNF, dl, up)
 			(process_alive, process, p_data) = checkProcesses(CNF)
+			(connection_alive, connection, address) = checkConnections(CNF)
 
-			shutdown = not (cpu_alive or net_alive or process_alive)
+			shutdown = not (cpu_alive or net_alive or process_alive or connection_alive)
 			if not shutdown:
 				current_shutdown_time = datetime.now() + timedelta(minutes=idle_time)
 				msg = "Delay shutdown until {0}\n".format(current_shutdown_time)
@@ -189,6 +217,7 @@ def main():
 				msg += "  cpu [{0}]: {1}\n".format(cpu_alive, cpu)
 				msg += "  network [{0}]: dl {1}, up {2}\n".format(net_alive, dl_speed, up_speed)
 				msg += "  process [{0}]: {1}\n".format(process_alive, process)
+				msg += "  connections [{0}]: {1}, config address: {2}\n".format(connection_alive, connection, address)
 				log(msg)
 
 		cmd = CNF['idle'].get("cmd", "")
