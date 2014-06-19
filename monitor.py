@@ -154,13 +154,13 @@ def checkConnections(config):
 				if address.endswith(".0") or address.endswith(".255"):
 					address = address[:address.rfind(".")]
 
-			for connection in connections:
-				if connection.startswith(address):
-					return (True, connection, addresses[i])
+				for connection in connections:
+					if connection.startswith(address):
+						return (True, connection, addresses[i])
 			else:
 				log("Invalid address: {0}\n".format(address))
 
-		return (False, None)
+		return (False, None, None)
 	
 
 def checkProcesses(config):
