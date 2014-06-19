@@ -12,7 +12,13 @@ CNF_DIR = "/etc/kam"
 CNF_FILE = os.path.join(CNF_DIR, "config.cnf")
 
 LOG_FILE = "/var/log/kam.log"
+VERSION_FILE = os.path.join(CNF_DIR, "version")
 
+if os.path.exists(VERSION_FILE):
+	with open(VERSION_FILE) as f:
+		VERSION = f.read()
+else:
+	VERSION = ""
 
 def log(msg):
 	content = []	
@@ -239,4 +245,9 @@ if __name__ == "__main__":
 	### fork the process so it is a daemon
 	pid = os.fork()
 	if pid == 0:
-		main()
+		log("Starting kamd version {0}".format(VERSION))
+		try:
+			main()
+		except:
+			log(traceback.format_exc())
+
