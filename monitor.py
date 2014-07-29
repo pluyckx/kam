@@ -148,26 +148,61 @@ def checkNetwork(config, prev_recv, prev_send):
 	return (dl >= dl_threshold or up >= up_threshold, network_dl, network_up, dl / 1024, up / 1024)
 
 def checkConnections(config):
-	addresses = config['network'].get("addresses_connected", "").split(",")
-	if len(addresses) > 0:
-		netstat_out = subprocess.getoutput("netstat --inet -a | grep ESTABLISHED | awk '{print $5}' | grep '192.168.0'")
-		connections = netstat_out.split("\n")
-		for i in range(0, len(connections)):
-			connections[i] = connections[i][:connections[i].find(":")]
-		for i in range(0, len(addresses)):
-			address = addresses[i]
-			if re.search("^[0-9]{1,3}(\.[0-9]{1,3}){3}$", address):
-				if address.endswith(".0") or address.endswith(".255"):
-					address = address[:address.rfind(".")]
+	pattern = "^([0-9]{1,3}(\.[0-9]{1,3}){3})\/([0-9]{1,2})$"
+	addresses_str = config['network'].get("addresses_connected", "").split(",")
+	addresses = []
 
-				for connection in connections:
-					if connection.startswith(address):
-						return (True, connection, addresses[i])
-			else:
-				log("Invalid address: {0}\n".format(address))
+	for i in range(0, len(addresses_str)):
+		match = re.search(pattern, addresses_str[i].strip())
+		
+		if match:
+			address = match.group(1)
+			subnet = match.group(3)
+
+			(ret, i_address) = ipToInt(address)
+
+			if ret:
+				addresses.append((i_address, int(subnet)))
+		else:
+			log("Invalid address in config file (section network -> addresses_connected): {0}".format(connections_raw[i]))
+	
+	if len(addresses) > 0:
+		netstat_out = subprocess.getoutput("netstat --inet -a | grep ESTABLISHED | awk '{print $5}'")
+		connections_raw = netstat_out.split("\n")
+		connections = []
+		for i in range(0, len(connections_raw)):
+			(ret, connection) = ipToInt(connections_raw[i][:connections_raw[i].find(":")])
+			if ret:
+				connections.append(connection)
+
+		for i in range(0, len(addresses)):
+			(address, subnetvalue) = addresses[i]
+			subnet = subnetMask(subnetvalue)	
+
+			for connection in connections:
+				if (connection & subnet) == (address & subnet):
+					return (True, intToIp(connection), intToIp(address))
 
 		return (False, None, None)
-	
+
+def subnetMask(value):
+	return 0xFFFFFFFF << (32 - value)
+
+def ipToInt(ip):
+	pattern = "^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$"
+	ip = ip.strip()
+
+	match = re.search(pattern, ip)
+	if match:
+		return (True, (int(match.group(1)) << 24) | (int(match.group(2)) << 16) | (int(match.group(3)) << 8) | int(match.group(4)))
+	else:
+		return (False, 0)
+		
+def intToIp(ip):
+	return "{0}.{1}.{2}.{3}".format(str((ip >> 24) & 0xFF), \
+					str((ip >> 16) & 0xFF), \
+					str((ip >> 8) & 0xFF), \
+					str(ip & 0xFF))
 
 def checkProcesses(config):
 	s_processes = config['processes'].get("processes", "").strip()
