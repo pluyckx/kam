@@ -12,4 +12,7 @@ service kam stop
 cp version /etc/kam/version
 cp kam.init /etc/init.d/kam
 cp monitor.py /usr/sbin/kamd
+
+chmod +x /etc/init.d/kam
+
 service kam start

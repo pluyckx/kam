@@ -33,6 +33,15 @@ then
 	exit 0
 fi
 
+uid=$(id -u)
+
+if [ $uid -ne 0 ]
+then
+	is_root="n"
+else
+	is_root="y"
+fi
+
 # Load the VERBOSE setting and other rcS variables
 . /lib/init/vars.sh
 
@@ -46,6 +55,12 @@ fi
 #
 do_start()
 {
+	if [ "$is_root" = "n" ]
+	then
+		log_daemon_msg "You must be root to start the service!"
+		return 1
+	fi
+
 	# Return
 	#   0 if daemon has been started
 	#   1 if daemon was already running
@@ -82,6 +97,12 @@ do_start()
 #
 do_stop()
 {
+	if [ "$is_root" = "n" ]
+        then
+                log_daemon_msg "You must be root to stop the service!"
+                return 1
+        fi
+
 	# Return
 	#   0 if daemon has been stopped
 	#   1 if daemon was already stopped
@@ -128,6 +149,12 @@ do_stop()
 # Function that sends a SIGHUP to the daemon/service
 #
 do_reload() {
+	if [ "$is_root" = "n" ]
+        then
+                log_daemon_msg "You must be root to reload the service!"
+                return 1
+        fi
+
 	#
 	# If the daemon can reload its configuration without
 	# restarting (for example, when it is sent a SIGHUP),
@@ -142,25 +169,32 @@ do_reload() {
 	return $?
 }
 
+do_kick() {
+	touch /tmp/kam_kick
+}
+
 case "$1" in
-  start)
-	do_start
-	;;
-  stop)
-	do_stop
-	;;
-  status)
-	status_of_proc "$DAEMON" "$NAME $VERSION" && exit 0 || exit $?
-	;;
-  restart|reload|force-reload)
-	#
-	# If do_reload() is not implemented then leave this commented out
-	# and leave 'force-reload' as an alias for 'restart'.
-	#
-	#log_daemon_msg "Reloading $DESC" "$NAME"
-	do_reload
-	#log_end_msg $?
-	;;
+	start)
+		do_start
+		;;
+	stop)
+		do_stop
+		;;
+	status)
+		status_of_proc "$DAEMON" "$NAME $VERSION" && exit 0 || exit $?
+		;;
+	restart|reload|force-reload)
+		#
+		# If do_reload() is not implemented then leave this commented out
+		# and leave 'force-reload' as an alias for 'restart'.
+		#
+		#log_daemon_msg "Reloading $DESC" "$NAME"
+		do_reload
+		#log_end_msg $?
+		;;
+	kick)
+		do_kick
+		;;
 #  restart)
 	#
 	# If the "reload" option is implemented then remove the
@@ -182,11 +216,11 @@ case "$1" in
 #		;;
 #	esac
 #	;;
-  *)
-	#echo "Usage: $SCRIPTNAME {start|stop|restart|reload|force-reload}" >&2
-	echo "Usage: $SCRIPTNAME {start|stop|status|restart|reload|force-reload}" >&2
-	exit 3
-	;;
+	*)
+		#echo "Usage: $SCRIPTNAME {start|stop|restart|reload|force-reload}" >&2
+		echo "Usage: $SCRIPTNAME {start|stop|status|restart|reload|force-reload|kick}" >&2
+		exit 3
+		;;
 esac
 
 :
