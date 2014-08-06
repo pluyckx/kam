@@ -44,8 +44,15 @@ then
 	apt-get install $packages
 fi
 
-echo "Installing monitor.py to /usr/bin/kamd"
-cp monitor.py /usr/sbin/kamd
+echo "Installing kam to /usr/lib/kam"
+echo "Creating directory /usr/lib/kam"
+mkdir /usr/lib/kam
+
+echo "Copying necesarry files to /usr/lib/kam"
+cp -r kam_src/* /usr/lib/kam
+
+echo "Creating link from /usr/bin/kam to /usr/lib/kam/kam.py"
+ln -s /usr/lib/kam/kam.py /usr/bin/kam
 
 echo "Installing init script to /etc/init.d"
 cp kam.init /etc/init.d/kam
