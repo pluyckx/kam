@@ -164,7 +164,7 @@ def checkConnections(config):
 			if ret:
 				addresses.append((i_address, int(subnet)))
 		else:
-			log("Invalid address in config file (section network -> addresses_connected): {0}".format(connections_raw[i]))
+			log("Invalid address in config file (section network -> addresses_connected): {0}".format(addresses_str[i]))
 	
 	if len(addresses) > 0:
 		netstat_out = subprocess.getoutput("netstat --inet -a | grep ESTABLISHED | awk '{print $5}'")
@@ -183,7 +183,7 @@ def checkConnections(config):
 				if (connection & subnet) == (address & subnet):
 					return (True, intToIp(connection), intToIp(address))
 
-		return (False, None, None)
+	return (False, None, None)
 
 def subnetMask(value):
 	return 0xFFFFFFFF << (32 - value)
