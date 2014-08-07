@@ -61,14 +61,17 @@ class ProcessorCheck(BaseCheck):
 
 	def loadConfig(self, config):
 		try:
-			self._total = float(config[self.CONFIG_NAME].get(self.CONFIG_ITEM_TOTAL))
+			total = config[self.CONFIG_NAME].get(self.CONFIG_ITEM_TOTAL)
 		except KeyError:
-			self._total = 50.0
+			total = None
 
 		try:
-			self._per_cpu = float(config[self.CONFIG_NAME].get(self.CONFIG_ITEM_PER_CPU))
+			per_cpu = config[self.CONFIG_NAME].get(self.CONFIG_ITEM_PER_CPU)
 		except KeyError:
-			self._per_cpu = 40.0
+			per_cpu = None
+
+		self._total = float(total) if total else 50.0
+		self._per_cpu = float(per_cpu) if per_cpu else 40.0
 
 		if self._debug:
 			self._debug.log("Config file read!\ntotal = {0}\nper_cpu = {1}\n".format(self._total, self._per_cpu))
