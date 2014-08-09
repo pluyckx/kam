@@ -153,18 +153,20 @@ def checkConnections(config):
 	addresses = []
 
 	for i in range(0, len(addresses_str)):
-		match = re.search(pattern, addresses_str[i].strip())
+		addresses_str[i] = addresses_str[i].strip()
+		if addresses_str[i]:
+			match = re.search(pattern, addresses_str[i].strip())
 		
-		if match:
-			address = match.group(1)
-			subnet = match.group(3)
+			if match:
+				address = match.group(1)
+				subnet = match.group(3)
 
-			(ret, i_address) = ipToInt(address)
+				(ret, i_address) = ipToInt(address)
 
-			if ret:
-				addresses.append((i_address, int(subnet)))
-		else:
-			log("Invalid address in config file (section network -> addresses_connected): {0}".format(addresses_str[i]))
+				if ret:
+					addresses.append((i_address, int(subnet)))
+			else:
+				log("Invalid address in config file (section network -> addresses_connected): {0}\n".format(addresses_str[i]))
 	
 	if len(addresses) > 0:
 		netstat_out = subprocess.getoutput("netstat --inet -a | grep ESTABLISHED | awk '{print $5}'")
