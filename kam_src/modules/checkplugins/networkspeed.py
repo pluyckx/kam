@@ -47,12 +47,12 @@ class NetworkSpeedCheck(BaseCheck):
 		try:
 			down = self._convertToFloat(config[self.CONFIG_NAME].get(self.CONFIG_ITEM_DOWN_SPEED))
 		except KeyError:
-			self._down = None
+			down = None
 
 		try:
 			up = self._convertToFloat(config[self.CONFIG_NAME].get(self.CONFIG_ITEM_UP_SPEED))
 		except KeyError:
-			self._up = None
+			up = None
 
 		self._down = down if down != None else 10.0 * 1024
 		self._up = up if up != None else 10.0 * 1024
