@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import os, sys
+import os, sys, importlib
 import configparser
 import traceback
 import time
@@ -10,11 +10,6 @@ import utils.utils as utils
 
 from modules.plugins.log.filelog import FileLog
 from modules.exceptions.exceptions import KamFunctionNotImplemented
-from modules.plugins.checks.processor import ProcessorCheck
-from modules.plugins.checks.networkspeed import NetworkSpeedCheck
-from modules.plugins.checks.networkconnections import NetworkConnectionsCheck
-from modules.plugins.checks.processes import ProcessesCheck
-from modules.plugins.checks.kick import KickCheck
 
 #CNF_DIR = "/etc/kam/"
 CNF_DIR = "/tmp/"
@@ -51,45 +46,59 @@ try:
 except:
 	cmd = None
 
-processor = ProcessorCheck(CNF, log, debug)
-networkspeed = NetworkSpeedCheck(CNF, log, debug)
-networkconnection = NetworkConnectionsCheck(CNF, log, debug)
-processes = ProcessesCheck(CNF, log, debug)
-kick = KickCheck(CNF, log, debug)
-
-checks = [ processor, networkspeed, networkconnection, processes, kick ]
+checks = []
+check_plugins_path = "modules/plugins/checks/"
+check_plugins_import_path = check_plugins_path.replace("/", ".") + "{0}"
+dirs = os.listdir(check_plugins_path)
+for d in dirs:
+	if d[-3:] == ".py" and d != "__init__.py":
+		f = d[:-3]
+		import_path = check_plugins_import_path.format(f)
+		print("importing {0}".format(import_path))
+		module = importlib.import_module(import_path)
+		if hasattr(module, "createInstance"):
+			checks.append(module.createInstance(CNF, log, debug))
 
 def check():
-	processor.check()
-	networkspeed.check()
-	networkconnection.check()
-	processes.check()
-	kick.check()
+	for c in checks:
+		c.check()
 
 def isAlive():
-	return processor.isAlive() or networkspeed.isAlive() or networkconnection.isAlive() or processes.isAlive() or kick.isAlive()
+	for c in checks:
+		if c.isAlive():
+			return True
+	return False
 
-def show():
-	print("processor={0}\nnetworkspeed={1}\nnetworkconnection={2}\nprocesses={3}\nkick={4}\n".format(processor.isAlive(), networkspeed.isAlive(), networkconnection.isAlive(), processes.isAlive(), kick.isAlive()))
+def main():
+	idle = time.clock_gettime(time.CLOCK_MONOTONIC) + idle_time * 60
+	log.log("[main] It is now {0} seconds, idle time set to {1}\n".format(time.clock_gettime(time.CLOCK_MONOTONIC), idle))
+	while True:
+		last_check = time.clock_gettime(time.CLOCK_MONOTONIC)
+		check()
 
-idle = time.clock_gettime(time.CLOCK_MONOTONIC) + idle_time * 60
-log.log("[main] It is now {0} seconds, idle time set to {1}\n".format(time.clock_gettime(time.CLOCK_MONOTONIC), idle))
-while True:
-	last_check = time.clock_gettime(time.CLOCK_MONOTONIC)
-	check()
-	show()
+		now = time.clock_gettime(time.CLOCK_MONOTONIC)
 
-	now = time.clock_gettime(time.CLOCK_MONOTONIC)
+		if isAlive():
+			idle = now + idle_time * 60
+			log.log("[main] It is now {0} seconds, idle time set to {1}\n".format(now, idle))
+		elif debug:
+			debug.log("[main] server is dead. It is now {0} seconds, idle time is set to {1}. diff = {2}\n".format(now, idle, (idle - now)))
 
-	if isAlive():
-		idle = now + idle_time * 60
-		log.log("[main] It is now {0} seconds, idle time set to {1}\n".format(now, idle))
-	elif debug:
-		debug.log("[main] server is dead. It is now {0} seconds, idle time is set to {1}. diff = {2}\n".format(now, idle, (idle - now)))
+		if now >= idle and cmd:
+			os.system(cmd)
 
-	if now >= idle and cmd:
-		os.system(cmd)
+		time_to_sleep = period - (now - last_check)
 
-	time_to_sleep = period - (now - last_check)
+		time.sleep(time_to_sleep)
 
-	time.sleep(time_to_sleep)
+if __name__ == "__main__":
+	try:
+#		pid = os.fork()
+#		if pid > 0:
+#			sys.exit(0) # we are the first run, we must exit
+
+		main()
+	except OSError as e:
+		log.log("Fork failed! {0}".format(str(e)))
+		sys.exit(1)
+

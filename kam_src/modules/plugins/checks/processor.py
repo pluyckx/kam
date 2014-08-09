@@ -82,3 +82,7 @@ class ProcessorCheck(BaseCheck):
 
 		if self._log:
 			self._log.log("[Processor] Config file read!\nenabled = {0}\ntotal = {1}\nper_cpu = {2}\n".format(self.isEnabled(), self._total, self._per_cpu))
+
+def createInstance(config, log, debug = None):
+	return ProcessorCheck(config, log, debug)
+

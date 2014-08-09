@@ -114,3 +114,5 @@ class NetworkAddress:
 	def __repr__(self):
 		return str(self)
 
+def createInstance(config, log, debug = None):
+	return NetworkConnectionsCheck(config, log, debug)

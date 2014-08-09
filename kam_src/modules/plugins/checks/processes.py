@@ -107,3 +107,6 @@ class Process:
 	def __repr__(self):
 		return str(self)
 
+def createInstance(config, log, debug = None):
+	return ProcessesCheck(config, log, debug)
+

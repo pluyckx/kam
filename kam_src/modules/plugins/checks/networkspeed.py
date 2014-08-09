@@ -87,3 +87,7 @@ class NetworkSpeedCheck(BaseCheck):
 				value *= 1024 * 1024
 
 			return value
+
+def createInstance(config, log, debug = None):
+	return NetworkSpeedCheck(config, log, debug)
+

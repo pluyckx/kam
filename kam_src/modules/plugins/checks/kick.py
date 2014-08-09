@@ -50,3 +50,5 @@ class KickCheck(BaseCheck):
 		if self._log:
 			self._log.log("[Kick] Config loaded, enabled={0}; files specified: {1}\n".format(self.isEnabled(), self._files))
 
+def createInstance(config, log, debug = None):
+	return KickCheck(config, log, debug)
