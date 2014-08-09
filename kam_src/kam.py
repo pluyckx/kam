@@ -10,9 +10,10 @@ from modules.checkplugins.processor import ProcessorCheck
 from modules.checkplugins.networkspeed import NetworkSpeedCheck
 from modules.checkplugins.networkconnections import NetworkConnectionsCheck
 from modules.checkplugins.processes import ProcessesCheck
+from modules.checkplugins.kick import KickCheck
 
 def show():
-	print("processor={0}\nnetwork={1}\nconnections={2}\nprocesses={3}\n".format(processor.isKeepAlive(), networkspeed.isKeepAlive(), networkconnection.isKeepAlive(), processes.isKeepAlive()))
+	print("processor={0}\nnetwork={1}\nconnections={2}\nprocesses={3}\nkick={4}".format(processor.isKeepAlive(), networkspeed.isKeepAlive(), networkconnection.isKeepAlive(), processes.isKeepAlive()), kick.isKeepAlive())
 
 
 log = Log("/tmp/test.log")
@@ -36,18 +37,20 @@ processor = ProcessorCheck(CNF, debug)
 networkspeed = NetworkSpeedCheck(CNF, debug)
 networkconnection = NetworkConnectionsCheck(CNF, log, debug)
 processes = ProcessesCheck(CNF, log, debug)
-
+kick = KickCheck(CNF, log, debug)
 
 processor.check()
 networkspeed.check()
 networkconnection.check()
 processes.check()
+kick.check()
 show()
 time.sleep(5)
 processor.check()
 networkspeed.check()
 networkconnection.check()
 processes.check()
+kick.check()
 show()
 
 for i in range(0, 100000000):
@@ -57,5 +60,6 @@ processor.check()
 networkspeed.check()
 networkconnection.check()
 processes.check()
+kick.check()
 show()
 
