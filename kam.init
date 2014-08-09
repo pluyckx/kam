@@ -20,7 +20,7 @@
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC="Keep Alive Monitor (KAM) monitors some performance parameters and services. When those are idle, a specified command is executed."
-NAME=kamd
+NAME=kam
 DAEMON=/usr/sbin/$NAME
 DAEMON_ARGS=""
 SCRIPTNAME=/etc/init.d/$NAME
