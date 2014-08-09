@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/bin/sh
 
 uid=$(id -u)
 
-if [[ $uid -ne 0 ]]
+if [ $uid -ne 0 ]
 then
 	echo "You must run this script as root!"
 	exit 1
@@ -10,7 +10,7 @@ fi
 
 echo "Checking if necessary packages are installed"
 dpkg -S python3 2>&1 > /dev/null
-if [[ $? -eq 0 ]]
+if [ $? -eq 0 ]
 then
 	python_available=1
 else
@@ -18,23 +18,23 @@ else
 fi
 
 dpkg -S python3-psutil 2>&1 > /dev/null
-if [[ $? -eq 0 ]]
+if [ $? -eq 0 ]
 then
 	psutil_available=1
 else
 	psutil_available=0
 fi
 
-if [[ $python_available -eq 0 || $psutil_available -eq 0 ]]
+if [ $python_available -eq 0 || $psutil_available -eq 0 ]
 then
 	packages=""
 
-	if [[ $python_available -eq 0 ]]
+	if [ $python_available -eq 0 ]
 	then
 		packages="$packages python3"
 	fi
 
-	if [[ $psutils_available -eq 0 ]]
+	if [ $psutils_available -eq 0 ]
 	then
 		packages="$packages python3-psutil"
 	fi
