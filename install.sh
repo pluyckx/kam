@@ -51,8 +51,20 @@ mkdir /usr/lib/kam
 echo "Copying necesarry files to /usr/lib/kam"
 cp -r kam_src/* /usr/lib/kam
 
-echo "Creating link from /usr/bin/kam to /usr/lib/kam/kam.py"
-ln -s /usr/lib/kam/kam.py /usr/bin/kam
+echo "Creating link from /usr/sbin/kamd to /usr/lib/kam/kam.py"
+ln -s /usr/lib/kam/kam.py /usr/sbin/kamd
+
+if [ ! -e "/etc/kam" ]
+then
+	echo "Creating etc folder /etc/kam"
+	mkdir -p /etc/kam
+fi
+
+echo "Copying empty config file (everything is commented out"
+cp kam.conf /etc/kam
+
+echo "Copying version file"
+cp version /etc/kam
 
 echo "Installing init script to /etc/init.d"
 cp kam.init /etc/init.d/kam

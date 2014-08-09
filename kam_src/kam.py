@@ -19,8 +19,8 @@ from modules.exceptions.exceptions import KamFunctionNotImplemented
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
 # Some paths we will use later in the script
-#CNF_DIR = "/etc/kam/"
-CNF_DIR = "/tmp/"
+CNF_DIR = "/etc/kam/"
+#CNF_DIR = "/tmp/"
 CNF_FILE = os.path.join(CNF_DIR, "kam.conf")
 
 # Load the config file
@@ -52,6 +52,7 @@ else:
 # Get the idle command if set
 try:
 	cmd = CNF["global"].get("idle_command")
+	log.log("[main] Idle command loaded: {0}\n".format(cmd))
 except:
 	cmd = None
 
