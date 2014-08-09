@@ -1,6 +1,6 @@
 
 
-from modules.checkplugins.basecheck import BaseCheck
+from modules.plugins.checks.basecheck import BaseCheck
 
 import re, subprocess
 
@@ -9,10 +9,12 @@ class NetworkConnectionsCheck(BaseCheck):
 	CONFIG_ITEM_CONNECTIONS = "connections"
 
 	def __init__(self, config, log, debug=None):
+		super().__init__()
+		self._log = log
 		self._debug = debug
 		self.loadConfig(config)
 
-	def check(self):
+	def _run(self):
 		netstat_out = subprocess.getoutput("netstat --inet -a | grep ESTABLISHED | awk '{print $5}'")
 		connections = netstat_out.split("\n")
 
@@ -24,7 +26,7 @@ class NetworkConnectionsCheck(BaseCheck):
 		for addr in self._addresses:
 			for connection in connections:
 				if addr.isIpInNetwork(connection):
-					self._keepAlive()
+					self._alive()
 					alive = (addr, connection)
 					break
 			
@@ -59,8 +61,13 @@ class NetworkConnectionsCheck(BaseCheck):
 		except KeyError:
 			pass
 
-		if self._debug:
-			self._debug.log("[NetworkConnections] Config loaded: {0}".format(self._addresses))
+		if len(self._addresses) > 0:
+			self._enable()
+		else:
+			self._disable()
+
+		if self._log:
+			self._log.log("[NetworkConnections] Config loaded: enabled={0}; addresses={1}\n".format(self.isEnabled(), self._addresses))
 
 
 class NetworkAddress:

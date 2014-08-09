@@ -1,5 +1,5 @@
 
-from modules.checkplugins.basecheck import BaseCheck
+from modules.plugins.checks.basecheck import BaseCheck
 import psutil
 from datetime import datetime, timedelta
 
@@ -8,14 +8,16 @@ class NetworkSpeedCheck(BaseCheck):
 	CONFIG_ITEM_UP_SPEED = "upload_speed"
 	CONFIG_ITEM_DOWN_SPEED = "download_speed"
 
-	def __init__(self, config, debug = None):
+	def __init__(self, config, log, debug = None):
+		super().__init__()
+		self._log = log
 		self._debug = debug
 		self._last_check = datetime.now()
 		self._prev_down = 0
 		self._prev_up = 0
 		self.loadConfig(config)
 
-	def check(self):
+	def _run(self):
 		network = psutil.net_io_counters(True)
 		network_dl = 0
 		network_up = 0
@@ -35,13 +37,14 @@ class NetworkSpeedCheck(BaseCheck):
 		self._prev_down = network_dl
 		self._prev_up = network_up
 
-		if dl >= self._down or up >= self._up:
-			self._keepAlive()
+		if (self._down != None and dl >= self._down) or \
+		   (self._up != None and up >= self._up):
+			self._alive()
 		else:
 			self._dead()
 
 		if self._debug:
-			self._debug.log("[NetworkSpeedCheck] down={0}, up={1} --> {2}\n".format(dl, up, self.isKeepAlive()))
+			self._debug.log("[NetworkSpeedCheck] down={0}, up={1} --> {2}\n".format(dl, up, self.isAlive()))
 
 	def loadConfig(self, config):
 		try:
@@ -54,11 +57,16 @@ class NetworkSpeedCheck(BaseCheck):
 		except KeyError:
 			up = None
 
-		self._down = down if down != None else 10.0 * 1024
-		self._up = up if up != None else 10.0 * 1024
+		self._down = down
+		self._up = up
 
-		if self._debug:
-			self._debug.log("[NetworkSpeedCheck] Config file read.\ndownload_speed = {0}\nupload_speed = {1}\n".format(self._down, self._up))
+		if self._down != None or self._up != None:
+			self._enable()
+		else:
+			self._disable()
+
+		if self._log:
+			self._log.log("[NetworkSpeedCheck] Config file read.\nenabled = {0}\ndownload_speed = {1}\nupload_speed = {2}\n".format(self.isEnabled(), self._down, self._up))
 
 	def _convertToFloat(self, s):
 		if not s:

@@ -1,5 +1,5 @@
 
-from modules.checkplugins.basecheck import BaseCheck
+from modules.plugins.checks.basecheck import BaseCheck
 
 import psutil
 
@@ -9,11 +9,12 @@ class ProcessesCheck(BaseCheck):
 	CONFIG_ITEM_MIN_COUNT = "min_{0}"
 
 	def __init__(self, config, log, debug = None):
+		super().__init__()
 		self._debug = debug
 		self._log = log
 		self.loadConfig(config)
 
-	def check(self):
+	def _run(self):
 		if len(self._processes) == 0:
 			self._dead()
 			return
@@ -38,7 +39,7 @@ class ProcessesCheck(BaseCheck):
 				break
 
 		if alive:
-			self._keepAlive()
+			self._alive()
 		else:
 			self._dead()
 
@@ -70,8 +71,13 @@ class ProcessesCheck(BaseCheck):
 
 				self._processes.append(Process(s_process, min_count))
 
-		if self._debug:
-			self._debug.log("[process] Config loaded: {0}\n".format(self._processes))
+		if len(self._processes) > 0:
+			self._enable()
+		else:
+			self._disable()
+
+		if self._log:
+			self._log.log("[process] Config loaded: enabled={0}; processes={1}\n".format(self.isEnabled(), self._processes))
 
 
 class Process:

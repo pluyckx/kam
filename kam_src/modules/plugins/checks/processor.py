@@ -1,7 +1,7 @@
 
 import os
 
-from modules.checkplugins.basecheck import BaseCheck
+from modules.plugins.checks.basecheck import BaseCheck
 import psutil
 
 class ProcessorCheck(BaseCheck):
@@ -9,10 +9,12 @@ class ProcessorCheck(BaseCheck):
 	CONFIG_ITEM_TOTAL = "total_load"
 	CONFIG_ITEM_PER_CPU = "per_cpu_load"
 
-	def __init__(self, config, debug = None):
+	def __init__(self, config, log, debug = None):
+		super().__init__()
+		self._log = log
+		self._debug = debug
 		self._total = 50
 		self._per_cpu = 40
-		self._debug = debug
 
 		self._prev_times = []
 
@@ -21,7 +23,7 @@ class ProcessorCheck(BaseCheck):
 
 		self.loadConfig(config)
 
-	def check(self):
+	def _run(self):
 		per_cpu = psutil.cpu_times(percpu=True)
 		per_cpu_percent = []
 		total = 0
@@ -44,20 +46,20 @@ class ProcessorCheck(BaseCheck):
 
 			per_cpu_percent.append(percent)
 
-			if percent >= self._per_cpu:
+			if self._per_cpu != None and percent >= self._per_cpu:
 				keep_alive = True
 
 		total = total / os.cpu_count()
 
-		keep_alive = keep_alive or (total >= self._total)
+		keep_alive = keep_alive or (total != None and total >= self._total)
 
 		if keep_alive:
-			self._keepAlive()
+			self._alive()
 		else:
 			self._dead()
 
 		if self._debug:
-			self._debug.log("Cpu check: total={0} per_cpu={1} --> {2}\n".format(total, per_cpu_percent, keep_alive))
+			self._debug.log("[Processor] total={0} per_cpu={1} --> {2}\n".format(total, per_cpu_percent, keep_alive))
 
 	def loadConfig(self, config):
 		try:
@@ -70,8 +72,13 @@ class ProcessorCheck(BaseCheck):
 		except KeyError:
 			per_cpu = None
 
-		self._total = float(total) if total else 50.0
-		self._per_cpu = float(per_cpu) if per_cpu else 40.0
+		self._total = float(total) if total else total
+		self._per_cpu = float(per_cpu) if per_cpu else per_cpu
 
-		if self._debug:
-			self._debug.log("Config file read!\ntotal = {0}\nper_cpu = {1}\n".format(self._total, self._per_cpu))
+		if self._total != None or self._per_cpu != None:
+			self._enable()
+		else:
+			self._disable()
+
+		if self._log:
+			self._log.log("[Processor] Config file read!\nenabled = {0}\ntotal = {1}\nper_cpu = {2}\n".format(self.isEnabled(), self._total, self._per_cpu))

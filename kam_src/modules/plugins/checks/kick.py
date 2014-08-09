@@ -1,19 +1,20 @@
 
 import os
 
-from modules.checkplugins.basecheck import BaseCheck
+from modules.plugins.checks.basecheck import BaseCheck
 
 class KickCheck(BaseCheck):
 	CONFIG_NAME = "kick"
 	CONFIG_ITEM_FILES = "files"
 
 	def __init__(self, config, log, debug = None):
+		super().__init__()
 		self._debug = debug
 		self._log = log
 
 		self.loadConfig(config)
 
-	def check(self):
+	def _run(self):
 		alive = []
 
 		for f in self._files:
@@ -22,7 +23,7 @@ class KickCheck(BaseCheck):
 				os.remove(f)
 
 		if len(alive) > 0:
-			self._keepAlive()
+			self._alive()
 		else:
 			self._dead()
 
@@ -39,10 +40,13 @@ class KickCheck(BaseCheck):
 
 
 		if files:
+			self._enable()
 			files = files.split(",")
 			for f in files:
 				self._files.append(f.strip())
+		else:
+			self._disable()
 
-		if self._debug:
-			self._debug.log("[Kick] Config loaded, files specified: {0}\n".format(self._files))
+		if self._log:
+			self._log.log("[Kick] Config loaded, enabled={0}; files specified: {1}\n".format(self.isEnabled(), self._files))
 
