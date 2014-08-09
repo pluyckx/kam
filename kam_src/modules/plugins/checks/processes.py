@@ -45,7 +45,7 @@ class ProcessesCheck(BaseCheck):
 
 		if self._debug:
 			self._debug.log("[Process] config list = {0}\n".format(self._processes))
-			self._debug.log("[Process] found = {0}\n".format(found_processes))
+			self._debug.log("[Process] found processes = {0}\n".format(found_processes))
 			self._debug.log("[Process] Kept alive {0} due to process {1}\n".format(alive != None, alive))
 
 	def loadConfig(self, config):
