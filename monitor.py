@@ -261,7 +261,7 @@ def main():
 				msg = "Delay shutdown until {0}\n".format(current_shutdown_time)
 				msg += "Checks:\n"
 				msg += "  cpu [{0}]: {1}\n".format(cpu_alive, cpu)
-				msg += "  kick [{0}]".format(kick_alive)
+				msg += "  kick [{0}]\n".format(kick_alive)
 				msg += "  network [{0}]: dl {1}, up {2}\n".format(net_alive, dl_speed, up_speed)
 				msg += "  process [{0}]: {1}\n".format(process_alive, process)
 				msg += "  connections [{0}]: {1}, config address: {2}\n".format(connection_alive, connection, address)
