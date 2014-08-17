@@ -1,5 +1,6 @@
 
 from modules.plugins.checks.basecheck import BaseCheck
+from modules.plugins.log.debuglog import DebugLog
 
 import psutil
 
@@ -44,9 +45,8 @@ class ProcessesCheck(BaseCheck):
 			self._dead()
 
 		if self._debug:
-			self._debug.log("[Process] config list = {0}\n".format(self._processes))
-			self._debug.log("[Process] found processes = {0}\n".format(found_processes))
-			self._debug.log("[Process] Kept alive {0} due to process {1}\n".format(alive != None, alive))
+			self._debug.log(DebugLog.TYPE_CHECK, self,\
+			                "processes", self._processes, "", alive)
 
 	def loadConfig(self, config):
 		self._processes = []
@@ -77,7 +77,7 @@ class ProcessesCheck(BaseCheck):
 			self._disable()
 
 		if self._log:
-			self._log.log("[process] Config loaded: enabled={0}; processes={1}\n".format(self.isEnabled(), self._processes))
+			self._log.log(self, "Config loaded: enabled={0}; processes={1}\n".format(self.isEnabled(), self._processes))
 
 
 class Process:

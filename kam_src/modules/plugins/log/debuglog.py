@@ -3,16 +3,21 @@ import os
 from datetime import datetime
 from modules.plugins.log.log import Log
 
-class FileLog(Log):
-	CONFIG_NAME = "filelog"
+class DebugLog(Log):
+	CONFIG_NAME = "filedebug"
 	CONFIG_ITEM_LINES = "max_lines"
 	CONFIG_ITEM_PATH = "path"
+	MSG_FORMAT = "{0} [{1}:{2}] {3} = {4}; {5} // {6}\n"
 
-	def __init__(self, config):
+	TYPE_CONFIG = "config"
+	TYPE_CHECK = "check"
+
+	def __init__(self, config, log):
+		self._log = log
 		self.loadConfig(config)
 		
 
-	def log(self, plugin, msg):
+	def log(self, log_type, plugin, parameter_name, parameter_value, err_value, comments):
 		if isinstance(plugin, str):
 			plugin_name = plugin
 		else:
@@ -24,13 +29,11 @@ class FileLog(Log):
 				for line in f:
 					content.append(line.rstrip("\n"))
 
-		# we do not allow to print multiple lines, make one line of it!
-		msg = msg.rstrip("\n").replace("\n", "; ")
-		line = "{0} [{1}]: {2}\n".format(\
-		                            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),\
-		                            plugin_name,\
-		                            msg)
-		                            
+		now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+		line = self.MSG_FORMAT.format(now, plugin_name, log_type,\
+		                                  parameter_name, parameter_value,\
+		                                  err_value, comments)
 
 		if len(content) + 1 < self._max_lines or self._max_lines == 0:
 			with open(self._path, "a") as f:
@@ -66,7 +69,7 @@ class FileLog(Log):
 			path = None
 
 		if path == None:
-			path = "/var/log/kam.log"
+			path = "/var/log/kam.debug"
 		if max_lines == None:
 			max_lines = 0
 
@@ -76,7 +79,8 @@ class FileLog(Log):
 		except ValueError:
 			self._max_lines = 0
 
-			print("[FileLog] Failed to parse max_lines from {0}\n".format(max_lines))
+			if self._log:
+				self._log.log("[DebugLog] Failed to parse max_lines from {0}\n".format(max_lines))
 		except TypeError:
 			self._max_lines = 0
 
@@ -84,5 +88,6 @@ class FileLog(Log):
 		if not os.path.exists(directory):
 			os.makedirs(directory)
 
-		self.log(self, "Config read, path={0}; max_lines={1}\n".format(self._path, self._max_lines))
+		if self._log:
+			self._log.log(self, "Config read, path={0}; max_lines={1}\n".format(self._path, self._max_lines))
 

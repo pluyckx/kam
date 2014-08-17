@@ -2,6 +2,7 @@
 from modules.plugins.checks.basecheck import BaseCheck
 import psutil
 from datetime import datetime, timedelta
+from modules.plugins.log.debuglog import DebugLog
 
 class NetworkSpeedCheck(BaseCheck):
 	CONFIG_NAME = "network"
@@ -44,7 +45,10 @@ class NetworkSpeedCheck(BaseCheck):
 			self._dead()
 
 		if self._debug:
-			self._debug.log("[NetworkSpeedCheck] down={0}, up={1} --> {2}\n".format(dl, up, self.isAlive()))
+			self._debug.log(DebugLog.TYPE_CHECK, self,\
+			                "upload_speed", up, "", up >= self._up)
+			self._debug.log(DebugLog.TYPE_CHECK, self,\
+			                "download_speed", dl, "", dl >= self._down)
 
 	def loadConfig(self, config):
 		try:
@@ -66,7 +70,7 @@ class NetworkSpeedCheck(BaseCheck):
 			self._disable()
 
 		if self._log:
-			self._log.log("[NetworkSpeedCheck] Config file read.\nenabled = {0}\ndownload_speed = {1}\nupload_speed = {2}\n".format(self.isEnabled(), self._down, self._up))
+			self._log.log(self, "Config file read.\nenabled = {0}\ndownload_speed = {1}\nupload_speed = {2}\n".format(self.isEnabled(), self._down, self._up))
 
 	def _convertToFloat(self, s):
 		if not s:
