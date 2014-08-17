@@ -2,6 +2,8 @@
 import os
 
 from modules.plugins.checks.basecheck import BaseCheck
+from modules.plugins.log.debuglog import DebugLog
+
 import psutil
 
 class ProcessorCheck(BaseCheck):
@@ -28,7 +30,8 @@ class ProcessorCheck(BaseCheck):
 		per_cpu_percent = []
 		total = 0
 		total_idle = 0
-		keep_alive = False
+		keep_alive_total = False
+		keep_alive_per_cpu = False
 
 		for i in range(0, len(per_cpu)):
 			cpu = per_cpu[i]
@@ -47,11 +50,12 @@ class ProcessorCheck(BaseCheck):
 			per_cpu_percent.append(percent)
 
 			if self._per_cpu != None and percent >= self._per_cpu:
-				keep_alive = True
+				keep_alive_per_cpu = True
 
 		total = total / os.cpu_count()
 
-		keep_alive = keep_alive or (total != None and total >= self._total)
+		keep_alive_total = (total != None and total >= self._total)
+		keep_alive = keep_alive_total or keep_alive_per_cpu
 
 		if keep_alive:
 			self._alive()
@@ -59,7 +63,8 @@ class ProcessorCheck(BaseCheck):
 			self._dead()
 
 		if self._debug:
-			self._debug.log("[Processor] total={0} per_cpu={1} --> {2}\n".format(total, per_cpu_percent, keep_alive))
+			self._debug.log(DebugLog.TYPE_CHECK, self, "total_load", total, "", keep_alive_total)
+			self._debug.log(DebugLog.TYPE_CHECK, self, "per_cpu_load", per_cpu_percent, "", keep_alive_per_cpu)
 
 	def loadConfig(self, config):
 		try:
@@ -81,7 +86,7 @@ class ProcessorCheck(BaseCheck):
 			self._disable()
 
 		if self._log:
-			self._log.log("[Processor] Config file read!\nenabled = {0}\ntotal = {1}\nper_cpu = {2}\n".format(self.isEnabled(), self._total, self._per_cpu))
+			self._log.log(self, "Config file read!\nenabled = {0}\ntotal = {1}\nper_cpu = {2}\n".format(self.isEnabled(), self._total, self._per_cpu))
 
 def createInstance(config, log, debug = None):
 	return ProcessorCheck(config, log, debug)

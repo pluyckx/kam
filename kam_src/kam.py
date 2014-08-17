@@ -9,6 +9,7 @@ import subprocess
 import utils.utils as utils
 
 from modules.plugins.log.filelog import FileLog
+from modules.plugins.log.debuglog import DebugLog
 from modules.exceptions.exceptions import KamFunctionNotImplemented
 
 # Move to the directory where this file is lcoated
@@ -19,8 +20,8 @@ from modules.exceptions.exceptions import KamFunctionNotImplemented
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
 # Some paths we will use later in the script
-CNF_DIR = "/etc/kam/"
-#CNF_DIR = "/tmp/"
+#CNF_DIR = "/etc/kam/"
+CNF_DIR = "/tmp/"
 CNF_FILE = os.path.join(CNF_DIR, "kam.conf")
 
 # Load the config file
@@ -30,22 +31,22 @@ if os.path.isfile(CNF_FILE):
 	CNF.read(CNF_FILE)
 
 # Create a log file
-log = FileLog(CNF, "log")
+log = FileLog(CNF)
 
 # Check if debugging is enabled in the config file
-is_debug_enabled = utils.toBool(CNF["global"].get("debug"))
+is_debug_enabled = utils.toBool(CNF["global"].get("filedebug"))
 
 # Load the period and idle_time configs
 try:
 	period = int(CNF["global"].get("period"))
 	idle_time = int(CNF["global"].get("idle_time"))
 except Exception as ex:
-	log.log(traceback.format_exc())
+	log.log("Main", traceback.format_exc())
 	raise ex
 
 # Only create a debug file when enabled
 if is_debug_enabled:
-	debug = FileLog(CNF, "debug", log)
+	debug = DebugLog(CNF, log)
 else:
 	debug = None
 
@@ -65,7 +66,7 @@ for d in dirs:
 	if d[-3:] == ".py" and d != "__init__.py":
 		f = d[:-3]
 		import_path = check_plugins_import_path.format(f)
-		log.log("importing {0}\n".format(import_path))
+		log.log("Main", "importing {0}\n".format(import_path))
 		module = importlib.import_module(import_path)
 		if hasattr(module, "createInstance"):
 			checks.append(module.createInstance(CNF, log, debug))
@@ -86,7 +87,7 @@ def isAlive():
 def main():
 	try:
 		idle = time.clock_gettime(time.CLOCK_MONOTONIC) + idle_time * 60
-		log.log("[main] It is now {0} seconds, idle time set to {1}\n".format(time.clock_gettime(time.CLOCK_MONOTONIC), idle))
+		log.log("Main", "It is now {0} seconds, idle time set to {1}\n".format(time.clock_gettime(time.CLOCK_MONOTONIC), idle))
 		while True:
 			last_check = time.clock_gettime(time.CLOCK_MONOTONIC)
 			check()
@@ -95,9 +96,9 @@ def main():
 
 			if isAlive():
 				idle = now + idle_time * 60
-				log.log("[main] It is now {0} seconds, idle time set to {1}\n".format(now, idle))
-			elif debug:
-				debug.log("[main] server is dead. It is now {0} seconds, idle time is set to {1}. diff = {2}\n".format(now, idle, (idle - now)))
+				log.log("Main", "It is now {0} seconds, idle time set to {1}\n".format(now, idle))
+			else:
+				log.log("Main", "server is dead. It is now {0} seconds, idle time is set to {1}. diff = {2}\n".format(now, idle, (idle - now)))
 
 			if now >= idle and cmd:
 				os.system(cmd)
@@ -107,7 +108,7 @@ def main():
 				time.sleep(time_to_sleep)
 
 	except Exception as ex:
-		log.log(traceback.format_exc())
+		log.log("Main", traceback.format_exc())
 		raise ex
 
 if __name__ == "__main__":
@@ -118,6 +119,6 @@ if __name__ == "__main__":
 
 		main()
 	except OSError as e:
-		log.log("Fork failed! {0}".format(str(e)))
+		log.log("Main", "Fork failed! {0}".format(str(e)))
 		sys.exit(1)
 

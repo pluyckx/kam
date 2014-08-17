@@ -1,6 +1,7 @@
 
 
 from modules.plugins.checks.basecheck import BaseCheck
+from modules.plugins.log.debuglog import DebugLog
 
 import re, subprocess
 
@@ -21,31 +22,33 @@ class NetworkConnectionsCheck(BaseCheck):
 		for i in range(0, len(connections)):
 			connections[i] = connections[i][:connections[i].find(":")]
 
-		alive = False
+		alive = []
 
 		for addr in self._addresses:
 			for connection in connections:
 				if addr.isIpInNetwork(connection):
 					self._alive()
-					alive = (addr, connection)
-					break
+					alive.append((addr, connection))
+					if not self._debug:
+						break
 			
-			if alive:
+			if not self._debug and len(alive) > 0:
 				break
 
-		if not alive:
+		if len(alive) == 0:
 			self._dead()
+		else:
+			self._alive()
 
 		if self._debug:
-			self._debug.log("[NetworkConnections] Found addresses: {0}\n".format(connections))
-			if alive:
-				self._debug.log("[NetworkConnection] {0} in {1} --> {2}\n".format(alive[1], alive[0], True))
-			else:
-				self._debug.log("[NetworkConnection] No addresses in {0}\n".format(self._addresses))
+                        self._debug.log(DebugLog.TYPE_CHECK, self,\
+			                self.CONFIG_ITEM_CONNECTIONS,\
+			                alive, "", self.isAlive())
 
 
 	def loadConfig(self, config):
 		self._addresses = []
+		err_value = ""
 
 		try:
 			addresses = config[self.CONFIG_NAME].get(self.CONFIG_ITEM_CONNECTIONS)
@@ -58,8 +61,9 @@ class NetworkConnectionsCheck(BaseCheck):
 						self._addresses.append(addr)
 					except Exception as ex:
 						log.log(str(ex) + "\n")
-		except KeyError:
-			pass
+						err_value += str(s) + ";"
+		except KeyError as e:
+			err_value += str(e) + ";"
 
 		if len(self._addresses) > 0:
 			self._enable()
@@ -67,7 +71,12 @@ class NetworkConnectionsCheck(BaseCheck):
 			self._disable()
 
 		if self._log:
-			self._log.log("[NetworkConnections] Config loaded: enabled={0}; addresses={1}\n".format(self.isEnabled(), self._addresses))
+			self._log.log(self, "Config loaded: enabled={0}; addresses={1}\n".format(self.isEnabled(), self._addresses))
+
+		if self._debug:
+                        self._debug.log(DebugLog.TYPE_CONFIG, self,\
+			                self.CONFIG_ITEM_CONNECTIONS,\
+			                self._addresses, err_value, "")
 
 
 class NetworkAddress:
