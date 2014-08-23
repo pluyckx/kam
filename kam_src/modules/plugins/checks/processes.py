@@ -1,6 +1,5 @@
 
 from modules.plugins.checks.basecheck import BaseCheck
-from modules.plugins.log.debuglog import DebugLog
 
 import psutil
 
@@ -9,11 +8,13 @@ class ProcessesCheck(BaseCheck):
 	CONFIG_ITEM_PROCESSES = "processes"
 	CONFIG_ITEM_MIN_COUNT = "min_{0}"
 
-	def __init__(self, config, log, debug = None):
+	def __init__(self, callbacks):
 		super().__init__()
-		self._debug = debug
-		self._log = log
-		self.loadConfig(config)
+		self._debug = callbacks["debuggers"]()
+		self._log = callbacks["logs"]()
+
+		self.loadConfig(callbacks["config"]())
+
 
 	def _run(self):
 		if len(self._processes) == 0:
@@ -45,7 +46,7 @@ class ProcessesCheck(BaseCheck):
 			self._dead()
 
 		if self._debug:
-			self._debug.log(DebugLog.TYPE_CHECK, self,\
+			self._debug.log(self._debug.TYPE_CHECK, self,\
 			                "processes", self._processes, "", alive)
 
 	def loadConfig(self, config):
@@ -107,6 +108,6 @@ class Process:
 	def __repr__(self):
 		return str(self)
 
-def createInstance(config, log, debug = None):
-	return ProcessesCheck(config, log, debug)
+def createInstance(callbacks):
+	return ProcessesCheck(callbacks)
 

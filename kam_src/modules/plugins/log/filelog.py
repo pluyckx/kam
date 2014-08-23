@@ -1,15 +1,15 @@
 
 import os
 from datetime import datetime
-from modules.plugins.log.log import Log
+from modules.plugins.log.logger import Logger
 
-class FileLog(Log):
+class FileLog(Logger):
 	CONFIG_NAME = "filelog"
 	CONFIG_ITEM_LINES = "max_lines"
 	CONFIG_ITEM_PATH = "path"
 
-	def __init__(self, config):
-		self.loadConfig(config)
+	def __init__(self, callbacks):
+		self.loadConfig(callbacks["config"]())
 		
 
 	def log(self, plugin, msg):
@@ -61,7 +61,9 @@ class FileLog(Log):
 			except KeyError:
 				path = None
 
+			self._enable()
 		else:
+			self._disable()
 			max_lines = None
 			path = None
 
@@ -85,4 +87,7 @@ class FileLog(Log):
 			os.makedirs(directory)
 
 		self.log(self, "Config read, path={0}; max_lines={1}\n".format(self._path, self._max_lines))
+
+def createInstance(callbacks):
+	return FileLog(callbacks)
 

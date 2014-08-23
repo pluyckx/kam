@@ -1,23 +1,20 @@
 
 import os
 from datetime import datetime
-from modules.plugins.log.log import Log
+from modules.plugins.debugger.debugger import Debugger
 
-class DebugLog(Log):
+class FileDebug(Debugger):
 	CONFIG_NAME = "filedebug"
 	CONFIG_ITEM_LINES = "max_lines"
 	CONFIG_ITEM_PATH = "path"
 	MSG_FORMAT = "{0} [{1}:{2}] {3} = {4}; {5} // {6}\n"
 
-	TYPE_CONFIG = "config"
-	TYPE_CHECK = "check"
-
-	def __init__(self, config, log):
-		self._log = log
-		self.loadConfig(config)
+	def __init__(self, callbacks):
+		self._logger = callbacks["logs"]()
+		self.loadConfig(callbacks["config"]())
 		
 
-	def log(self, log_type, plugin, parameter_name, parameter_value, err_value, comments):
+	def _log(self, log_type, plugin, parameter_name, parameter_value, err_value, comments):
 		if isinstance(plugin, str):
 			plugin_name = plugin
 		else:
@@ -64,7 +61,10 @@ class DebugLog(Log):
 			except KeyError:
 				path = None
 
+			self._enable()
+
 		else:
+			self._disable()
 			max_lines = None
 			path = None
 
@@ -79,8 +79,8 @@ class DebugLog(Log):
 		except ValueError:
 			self._max_lines = 0
 
-			if self._log:
-				self._log.log("[DebugLog] Failed to parse max_lines from {0}\n".format(max_lines))
+			if self._logger:
+				self._logger.log("[DebugLog] Failed to parse max_lines from {0}\n".format(max_lines))
 		except TypeError:
 			self._max_lines = 0
 
@@ -88,6 +88,9 @@ class DebugLog(Log):
 		if not os.path.exists(directory):
 			os.makedirs(directory)
 
-		if self._log:
-			self._log.log(self, "Config read, path={0}; max_lines={1}\n".format(self._path, self._max_lines))
+		if self._logger:
+			self._logger.log(self, "Config read, path={0}; max_lines={1}\n".format(self._path, self._max_lines))
+
+def createInstance(callbacks):
+	return FileDebug(callbacks)
 
