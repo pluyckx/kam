@@ -2,21 +2,23 @@
 from modules.plugins.checks.basecheck import BaseCheck
 import psutil
 from datetime import datetime, timedelta
-from modules.plugins.log.debuglog import DebugLog
 
 class NetworkSpeedCheck(BaseCheck):
 	CONFIG_NAME = "network"
 	CONFIG_ITEM_UP_SPEED = "upload_speed"
 	CONFIG_ITEM_DOWN_SPEED = "download_speed"
 
-	def __init__(self, config, log, debug = None):
+	def __init__(self, callbacks):
 		super().__init__()
-		self._log = log
-		self._debug = debug
+		self._debug = callbacks["debuggers"]()
+		self._log = callbacks["logs"]()
+
 		self._last_check = datetime.now()
 		self._prev_down = 0
 		self._prev_up = 0
-		self.loadConfig(config)
+
+		self.loadConfig(callbacks["config"]())
+
 
 	def _run(self):
 		network = psutil.net_io_counters(True)
@@ -45,9 +47,9 @@ class NetworkSpeedCheck(BaseCheck):
 			self._dead()
 
 		if self._debug:
-			self._debug.log(DebugLog.TYPE_CHECK, self,\
+			self._debug.log(self._debug.TYPE_CHECK, self,\
 			                "upload_speed", up, "", up >= self._up)
-			self._debug.log(DebugLog.TYPE_CHECK, self,\
+			self._debug.log(self._debug.TYPE_CHECK, self,\
 			                "download_speed", dl, "", dl >= self._down)
 
 	def loadConfig(self, config):
@@ -92,6 +94,6 @@ class NetworkSpeedCheck(BaseCheck):
 
 			return value
 
-def createInstance(config, log, debug = None):
-	return NetworkSpeedCheck(config, log, debug)
+def createInstance(callbacks):
+	return NetworkSpeedCheck(callbacks)
 
