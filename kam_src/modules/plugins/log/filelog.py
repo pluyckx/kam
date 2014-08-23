@@ -77,12 +77,13 @@ class FileLog(Logger):
 		self._path = path
 		try:
 			self._max_lines = int(max_lines)
-		except ValueError:
+		except ValueError as ex:
 			self._max_lines = 0
 
-			syslog.syslog("[Kam-FileLog] Failed to parse max_lines from {0}\n".format(max_lines))
-		except TypeError:
+			syslog.syslog("[Kam-FileLog] Failed to parse max_lines from {0}; ValueError: {1}\n".format(max_lines, str(ex)))
+		except TypeError as ex:
 			self._max_lines = 0
+			syslog.syslog("[Kam-FileLog] Failed to parse max_lines from {0}; Type Error {1}\n".format(max_lines, str(ex)))
 
 		directory = os.path.dirname(self._path)
 		if not os.path.exists(directory):
