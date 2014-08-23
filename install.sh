@@ -1,5 +1,6 @@
 #!/bin/sh
 
+
 uid=$(id -u)
 
 if [ $uid -ne 0 ]
@@ -60,7 +61,7 @@ then
 	mkdir -p /etc/kam
 fi
 
-echo "Copying empty config file (everything is commented out"
+echo "Copying default config file"
 cp kam.conf /etc/kam
 
 echo "Copying version file"
