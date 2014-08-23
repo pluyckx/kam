@@ -2,7 +2,6 @@
 import os
 
 from modules.plugins.checks.basecheck import BaseCheck
-from modules.plugins.log.debuglog import DebugLog
 
 import psutil
 
@@ -11,19 +10,20 @@ class ProcessorCheck(BaseCheck):
 	CONFIG_ITEM_TOTAL = "total_load"
 	CONFIG_ITEM_PER_CPU = "per_cpu_load"
 
-	def __init__(self, config, log, debug = None):
+	def __init__(self, callbacks):
 		super().__init__()
-		self._log = log
-		self._debug = debug
+		self._debug = callbacks["debuggers"]()
+		self._log = callbacks["logs"]()
+
 		self._total = 50
 		self._per_cpu = 40
 
 		self._prev_times = []
-
 		for i in range(0, os.cpu_count()):
 			self._prev_times.append((0.0, 0.0))
 
-		self.loadConfig(config)
+		self.loadConfig(callbacks["config"]())
+
 
 	def _run(self):
 		per_cpu = psutil.cpu_times(percpu=True)
@@ -63,8 +63,8 @@ class ProcessorCheck(BaseCheck):
 			self._dead()
 
 		if self._debug:
-			self._debug.log(DebugLog.TYPE_CHECK, self, "total_load", total, "", keep_alive_total)
-			self._debug.log(DebugLog.TYPE_CHECK, self, "per_cpu_load", per_cpu_percent, "", keep_alive_per_cpu)
+			self._debug.log(self._debug.TYPE_CHECK, self, "total_load", total, "", keep_alive_total)
+			self._debug.log(self._debug.TYPE_CHECK, self, "per_cpu_load", per_cpu_percent, "", keep_alive_per_cpu)
 
 	def loadConfig(self, config):
 		try:
@@ -88,6 +88,6 @@ class ProcessorCheck(BaseCheck):
 		if self._log:
 			self._log.log(self, "Config file read!\nenabled = {0}\ntotal = {1}\nper_cpu = {2}\n".format(self.isEnabled(), self._total, self._per_cpu))
 
-def createInstance(config, log, debug = None):
-	return ProcessorCheck(config, log, debug)
+def createInstance(callbacks):
+	return ProcessorCheck(callbacks)
 

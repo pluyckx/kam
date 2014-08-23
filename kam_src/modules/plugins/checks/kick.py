@@ -2,18 +2,17 @@
 import os
 
 from modules.plugins.checks.basecheck import BaseCheck
-from modules.plugins.log.debuglog import DebugLog
 
 class KickCheck(BaseCheck):
 	CONFIG_NAME = "kick"
 	CONFIG_ITEM_FILES = "files"
 
-	def __init__(self, config, log, debug = None):
+	def __init__(self, callbacks):
 		super().__init__()
-		self._debug = debug
-		self._log = log
+		self._debug = callbacks["debuggers"]()
+		self._log = callbacks["logs"]()
 
-		self.loadConfig(config)
+		self.loadConfig(callbacks["config"]())
 
 	def _run(self):
 		alive = []
@@ -29,7 +28,7 @@ class KickCheck(BaseCheck):
 			self._dead()
 
 		if self._debug:
-			self._debug.log(DebugLog.TYPE_CHECK, self,\
+			self._debug.log(self._debug.TYPE_CHECK, self,\
 			                self.CONFIG_ITEM_FILES, alive, "", "")
 
 	def loadConfig(self, config):
@@ -56,9 +55,9 @@ class KickCheck(BaseCheck):
 			                .format(self.isEnabled(), self._files))
 		
 		if self._debug:
-                        self._debug.log(DebugLog.TYPE_CONFIG, self,\
+                        self._debug.log(self._debug.TYPE_CONFIG, self,\
 			                self.CONFIG_ITEM_FILES, files,\
 			                err_value, self.isEnabled())
 
-def createInstance(config, log, debug = None):
-	return KickCheck(config, log, debug)
+def createInstance(callbacks):
+	return KickCheck(callbacks)

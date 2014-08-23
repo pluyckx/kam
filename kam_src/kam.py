@@ -8,9 +8,12 @@ import subprocess
 
 import utils.utils as utils
 
-from modules.plugins.log.filelog import FileLog
-from modules.plugins.log.debuglog import DebugLog
+from modules.plugins.log.logmanager import LogManager
+from modules.plugins.debugger.debugmanager import DebugManager
 from modules.exceptions.exceptions import KamFunctionNotImplemented
+
+from modules.plugins.core.periodsleep import PeriodSleep
+from modules.plugins.core.idlecommand import IdleCommand
 
 # Move to the directory where this file is lcoated
 # We are using dynamic importing and it works relative to the
@@ -18,6 +21,51 @@ from modules.exceptions.exceptions import KamFunctionNotImplemented
 # When running this script through a symlink, the CWD is wrong and we must
 # correct it. This line will correct the CWD
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
+
+checks = []
+logmanager = None
+debugmanager = None
+CNF = None
+
+def getChecks():
+	return checks
+
+def getLogs():
+	return logmanager
+
+def getDebuggers():
+	return debugmanager
+
+def getConfig():
+	return CNF
+
+data_callbacks = {}
+data_callbacks["checks"] = getChecks
+data_callbacks["logs"] = getLogs
+data_callbacks["debuggers"] = getDebuggers
+data_callbacks["config"] = getConfig
+
+# Load all modules from a path
+# The modules must contain the function createInstance
+def loadModules(path):
+	# The following code will dynamically load all check plugins
+	instances = []
+	import_path = path.replace("/", ".") + "{0}"
+	dirs = os.listdir(path)
+	for d in dirs:
+		if d[-3:] == ".py" and d != "__init__.py":
+			f = d[:-3]
+			imp = import_path.format(f)
+			logmanager.log("Main", "importing {0}\n".format(imp))
+			module = importlib.import_module(imp)
+			if hasattr(module, "createInstance"):
+				instances.append(module.createInstance(data_callbacks))
+
+	return instances
+
+CNF = None
+debugmanager = DebugManager()
+logmanager = LogManager()
 
 # Some paths we will use later in the script
 CNF_DIR = "/etc/kam/"
@@ -29,85 +77,53 @@ CNF = configparser.ConfigParser()
 if os.path.isfile(CNF_FILE):
 	CNF.read(CNF_FILE)
 
-# Create a log file
-log = FileLog(CNF)
+# load the log modules
+logs = loadModules("modules/plugins/log/")
+for log in logs:
+	logmanager.add(log)
 
-# Check if debugging is enabled in the config file
-is_debug_enabled = utils.toBool(CNF["global"].get("filedebug"))
+# load the debug modules
+debuggers = loadModules("modules/plugins/debugger/")
+for debugger in debuggers:
+	debugmanager.add(debugger)
 
-# Load the period and idle_time configs
-try:
-	period = int(CNF["global"].get("period"))
-	idle_time = int(CNF["global"].get("idle_time"))
-except Exception as ex:
-	log.log("Main", traceback.format_exc())
-	raise ex
+# load the core modules
+core = loadModules("modules/plugins/core/")
 
-# Only create a debug file when enabled
-if is_debug_enabled:
-	debug = DebugLog(CNF, log)
-else:
-	debug = None
+# For now we must remove some core modules form the list and assign them to a
+# specific variable, so we can call them in the right order.
+# TODO add a system so the core modules are ordered and we just can itterate
+# the list
 
-# Get the idle command if set
-try:
-	cmd = CNF["global"].get("idle_command")
-	log.log("[main] Idle command loaded: {0}\n".format(cmd))
-except:
-	cmd = None
+period_sleep = None
+idle_command = None
+for core_module in core:
+	if isinstance(core_module, PeriodSleep):
+		period_sleep = core_module
+	elif isinstance(core_module, IdleCommand):
+		idle_command = core_module
+		
 
-# The following code will dynamically load all check plugins
-checks = []
-check_plugins_path = "modules/plugins/checks/"
-check_plugins_import_path = check_plugins_path.replace("/", ".") + "{0}"
-dirs = os.listdir(check_plugins_path)
-for d in dirs:
-	if d[-3:] == ".py" and d != "__init__.py":
-		f = d[:-3]
-		import_path = check_plugins_import_path.format(f)
-		log.log("Main", "importing {0}\n".format(import_path))
-		module = importlib.import_module(import_path)
-		if hasattr(module, "createInstance"):
-			checks.append(module.createInstance(CNF, log, debug))
+if period_sleep:
+	core.remove(period_sleep)
+if idle_command:
+	core.remove(idle_command)
 
-# Execute all checks
-def check():
-	for c in checks:
-		c.check()
-
-# Check is the server is kept alive
-def isAlive():
-	for c in checks:
-		if c.isAlive():
-			return True
-	return False
+# load all check modules
+checks = loadModules("modules/plugins/checks/")
 
 # The main function which normally never stops, unless an exception occurs
 def main():
 	try:
-		idle = time.clock_gettime(time.CLOCK_MONOTONIC) + idle_time * 60
-		log.log("Main", "It is now {0} seconds, idle time set to {1}\n".format(time.clock_gettime(time.CLOCK_MONOTONIC), idle))
 		while True:
-			last_check = time.clock_gettime(time.CLOCK_MONOTONIC)
-			check()
+			for check in checks:
+				check.check()
 
-			now = time.clock_gettime(time.CLOCK_MONOTONIC)
-
-			if isAlive():
-				idle = now + idle_time * 60
-				log.log("Main", "It is now {0} seconds, idle time set to {1}\n".format(now, idle))
-			else:
-				log.log("Main", "server is dead. It is now {0} seconds, idle time is set to {1}. diff = {2}\n".format(now, idle, (idle - now)))
-
-			if now >= idle and cmd:
-				os.system(cmd)
-
-			time_to_sleep = period - (now - last_check)
-			if time_to_sleep > 0:
-				time.sleep(time_to_sleep)
+			idle_command.execute()
+			period_sleep.execute()
 
 	except Exception as ex:
-		log.log("Main", traceback.format_exc())
+		logmanager.log("Main", traceback.format_exc())
 		raise ex
 
 if __name__ == "__main__":
@@ -118,6 +134,6 @@ if __name__ == "__main__":
 
 		main()
 	except OSError as e:
-		log.log("Main", "Fork failed! {0}".format(str(e)))
+		logmanager.log("Main", "Fork failed! {0}".format(str(e)))
 		sys.exit(1)
 

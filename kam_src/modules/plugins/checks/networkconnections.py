@@ -1,7 +1,6 @@
 
 
 from modules.plugins.checks.basecheck import BaseCheck
-from modules.plugins.log.debuglog import DebugLog
 
 import re, subprocess
 
@@ -9,11 +8,12 @@ class NetworkConnectionsCheck(BaseCheck):
 	CONFIG_NAME = "network"
 	CONFIG_ITEM_CONNECTIONS = "connections"
 
-	def __init__(self, config, log, debug=None):
+	def __init__(self, callbacks):
 		super().__init__()
-		self._log = log
-		self._debug = debug
-		self.loadConfig(config)
+		self._debug = callbacks["debuggers"]()
+		self._log = callbacks["logs"]()
+
+		self.loadConfig(callbacks["config"]())
 
 	def _run(self):
 		netstat_out = subprocess.getoutput("netstat --inet -a | grep ESTABLISHED | awk '{print $5}'")
@@ -41,7 +41,7 @@ class NetworkConnectionsCheck(BaseCheck):
 			self._alive()
 
 		if self._debug:
-                        self._debug.log(DebugLog.TYPE_CHECK, self,\
+                        self._debug.log(self._debug.TYPE_CHECK, self,\
 			                self.CONFIG_ITEM_CONNECTIONS,\
 			                alive, "", self.isAlive())
 
@@ -74,7 +74,7 @@ class NetworkConnectionsCheck(BaseCheck):
 			self._log.log(self, "Config loaded: enabled={0}; addresses={1}\n".format(self.isEnabled(), self._addresses))
 
 		if self._debug:
-                        self._debug.log(DebugLog.TYPE_CONFIG, self,\
+                        self._debug.log(self._debug.TYPE_CONFIG, self,\
 			                self.CONFIG_ITEM_CONNECTIONS,\
 			                self._addresses, err_value, "")
 
@@ -123,5 +123,5 @@ class NetworkAddress:
 	def __repr__(self):
 		return str(self)
 
-def createInstance(config, log, debug = None):
-	return NetworkConnectionsCheck(config, log, debug)
+def createInstance(callbacks):
+	return NetworkConnectionsCheck(callbacks)
