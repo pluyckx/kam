@@ -39,9 +39,9 @@ class IdleCommand(CoreBase):
 			os.system(self._idle_command)
 
 		if self._log:
-			self._log.log(self, "It is now {0}, the server is alive: {1}, when the server is dead for {2} minutes, the server will shutdown".format(\
+			self._log.log(self, "It is now {0}, the server is alive: {1}, when the server is dead for {2} seconds, the server will shutdown".format(\
 			                     now, is_alive,
-			                     self._idle_time if is_alive else self._idle_time - delta))
+			                     self._idle_time * 60 if is_alive else self._idle_time*60 - delta))
 
 	def loadConfig(self, config):
 		err_value = ""

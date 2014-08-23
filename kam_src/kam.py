@@ -23,9 +23,9 @@ from modules.plugins.core.idlecommand import IdleCommand
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
 checks = []
-logmanager = None
-debugmanager = None
-CNF = None
+logmanager = LogManager()
+debugmanager = DebugManager()
+CNF = configparser.ConfigParser()
 
 def getChecks():
 	return checks
@@ -63,16 +63,9 @@ def loadModules(path):
 
 	return instances
 
-CNF = None
-debugmanager = DebugManager()
-logmanager = LogManager()
-
 # Some paths we will use later in the script
 CNF_DIR = "/etc/kam/"
 CNF_FILE = os.path.join(CNF_DIR, "kam.conf")
-
-# Load the config file
-CNF = configparser.ConfigParser()
 
 if os.path.isfile(CNF_FILE):
 	CNF.read(CNF_FILE)
@@ -110,7 +103,10 @@ if idle_command:
 	core.remove(idle_command)
 
 # load all check modules
-checks = loadModules("modules/plugins/checks/")
+checks_tmp = loadModules("modules/plugins/checks/")
+
+for check in checks_tmp:
+	checks.append(check)
 
 # The main function which normally never stops, unless an exception occurs
 def main():
