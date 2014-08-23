@@ -1,5 +1,6 @@
 
 import os
+import syslog
 from datetime import datetime
 from modules.plugins.log.logger import Logger
 
@@ -66,6 +67,7 @@ class FileLog(Logger):
 			self._disable()
 			max_lines = None
 			path = None
+			syslog.syslog("[Kam-FileLog] No file log specified. File logging not enabled")
 
 		if path == None:
 			path = "/var/log/kam.log"
@@ -78,7 +80,7 @@ class FileLog(Logger):
 		except ValueError:
 			self._max_lines = 0
 
-			print("[FileLog] Failed to parse max_lines from {0}\n".format(max_lines))
+			syslog.syslog("[Kam-FileLog] Failed to parse max_lines from {0}\n".format(max_lines))
 		except TypeError:
 			self._max_lines = 0
 
