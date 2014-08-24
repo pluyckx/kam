@@ -4,6 +4,7 @@ from modules.exceptions.exceptions import KamFunctionNotImplemented
 class Debugger:
 	TYPE_CONFIG = "config"
 	TYPE_CHECK = "check"
+	TYPE_EXECUTE = "execute"
 
 	def __init__(self):
 		self._enabled = False

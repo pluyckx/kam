@@ -20,6 +20,11 @@ class PeriodSleep(CoreBase):
 		delta = now - self._last_run
 		self._last_run = now
 		time_to_sleep = self._sleep - delta
+
+		if self._debug:
+			self._debug(self._debug.TYPE_EXECUTE, self,\
+			            "time_to_sleep", time_to_sleep, "", "")
+
 		if time_to_sleep > 0:
 			time.sleep(time_to_sleep)
 
