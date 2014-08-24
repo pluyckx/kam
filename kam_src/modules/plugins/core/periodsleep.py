@@ -22,7 +22,7 @@ class PeriodSleep(CoreBase):
 		time_to_sleep = self._sleep - delta
 
 		if self._debug:
-			self._debug(self._debug.TYPE_EXECUTE, self,\
+			self._debug.log(self._debug.TYPE_EXECUTE, self,\
 			            "time_to_sleep", time_to_sleep, "", "")
 
 		if time_to_sleep > 0:
