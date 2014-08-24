@@ -106,6 +106,7 @@ if idle_command:
 checks_tmp = loadModules("modules/plugins/checks/")
 
 for check in checks_tmp:
+	log.log("Main", "Add check to list: {0}".format(check.__class__.__name__))
 	checks.append(check)
 
 # The main function which normally never stops, unless an exception occurs
