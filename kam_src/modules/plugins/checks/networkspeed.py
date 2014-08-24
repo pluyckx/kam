@@ -1,7 +1,7 @@
 
 from modules.plugins.checks.basecheck import BaseCheck
 import psutil
-from datetime import datetime, timedelta
+import time
 
 class NetworkSpeedCheck(BaseCheck):
 	CONFIG_NAME = "network"
@@ -13,7 +13,7 @@ class NetworkSpeedCheck(BaseCheck):
 		self._debug = callbacks["debuggers"]()
 		self._log = callbacks["logs"]()
 
-		self._last_check = datetime.now()
+		self._last_check = time.clock_gettime(time.CLOCK_MONOTONIC)
 		self._prev_down = 0
 		self._prev_up = 0
 
@@ -30,11 +30,11 @@ class NetworkSpeedCheck(BaseCheck):
 				network_dl += network[k].bytes_recv
 				network_up += network[k].bytes_sent
 
-		now = datetime.now()
+		now = time.clock_gettime(time.CLOCK_MONOTONIC)
 		delta = now - self._last_check
 
-		dl = (network_dl - self._prev_down) / delta.total_seconds()
-		up = (network_up - self._prev_up) / delta.total_seconds()
+		dl = (network_dl - self._prev_down) / delta
+		up = (network_up - self._prev_up) / delta
 
 		self._last_check = now
 		self._prev_down = network_dl
