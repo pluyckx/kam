@@ -18,10 +18,16 @@ class PeriodSleep(CoreBase):
 	def _execute(self):
 		now = time.clock_gettime(time.CLOCK_MONOTONIC)
 		delta = now - self._last_run
-		self._last_run = now
 		time_to_sleep = self._sleep - delta
+
+		if self._debug:
+			self._debug.log(self._debug.TYPE_EXECUTE, self,\
+			            "time_to_sleep", time_to_sleep, "", "")
+
 		if time_to_sleep > 0:
 			time.sleep(time_to_sleep)
+
+		self._last_run = time.clock_gettime(time.CLOCK_MONOTONIC)
 
 	def loadConfig(self, config):
 		err_value = ""
