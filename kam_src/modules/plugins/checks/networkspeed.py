@@ -8,16 +8,14 @@ class NetworkSpeedCheck(BaseCheck):
 	CONFIG_ITEM_UP_SPEED = "upload_speed"
 	CONFIG_ITEM_DOWN_SPEED = "download_speed"
 
-	def __init__(self, callbacks):
+	def __init__(self, data_dict):
 		super().__init__()
-		self._debug = callbacks["debuggers"]()
-		self._log = callbacks["logs"]()
+		self._debug = data_dict["debuggers"]
+		self._log = data_dict["logs"]
 
 		self._last_check = time.clock_gettime(time.CLOCK_MONOTONIC)
 		self._prev_down = 0
 		self._prev_up = 0
-
-		self.loadConfig(callbacks["config"]())
 
 
 	def _run(self):
@@ -94,6 +92,6 @@ class NetworkSpeedCheck(BaseCheck):
 
 			return value
 
-def createInstance(callbacks):
-	return NetworkSpeedCheck(callbacks)
+def createInstance(data_dict):
+	return NetworkSpeedCheck(data_dict)
 

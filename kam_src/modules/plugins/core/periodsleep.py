@@ -7,13 +7,12 @@ class PeriodSleep(CoreBase):
 	CONFIG_NAME = "global"
 	CONFIG_ITEM_PERIOD = "period"
 
-	def __init__(self, callbacks):
+	def __init__(self, data_dict):
 		super().__init__()
-		self._debug = callbacks["debuggers"]()
-		self._log = callbacks["logs"]()
+		self._debug = data_dict["debuggers"]
+		self._log = data_dict["logs"]
 		self._last_run = time.clock_gettime(time.CLOCK_MONOTONIC)
 
-		self.loadConfig(callbacks["config"]())
 
 	def _execute(self):
 		now = time.clock_gettime(time.CLOCK_MONOTONIC)
@@ -63,6 +62,6 @@ class PeriodSleep(CoreBase):
 					self.CONFIG_ITEM_PERIOD, sleep,\
 					err_value, self.isEnabled())
 
-def createInstance(callbacks):
-	return PeriodSleep(callbacks)
+def createInstance(data_dict):
+	return PeriodSleep(data_dict)
 

@@ -27,23 +27,11 @@ logmanager = LogManager()
 debugmanager = DebugManager()
 CNF = configparser.ConfigParser()
 
-def getChecks():
-	return checks
-
-def getLogs():
-	return logmanager
-
-def getDebuggers():
-	return debugmanager
-
-def getConfig():
-	return CNF
-
-data_callbacks = {}
-data_callbacks["checks"] = getChecks
-data_callbacks["logs"] = getLogs
-data_callbacks["debuggers"] = getDebuggers
-data_callbacks["config"] = getConfig
+data_dict = {}
+data_dict["checks"] = checks
+data_dict["logs"] = logmanager
+data_dict["debuggers"] = debugmanager
+data_dict["config"] = CNF
 
 # Load all modules from a path
 # The modules must contain the function createInstance
@@ -59,7 +47,9 @@ def loadModules(path):
 			logmanager.log("Main", "importing {0}\n".format(imp))
 			module = importlib.import_module(imp)
 			if hasattr(module, "createInstance"):
-				instances.append(module.createInstance(data_callbacks))
+				instance = module.createInstance(data_dict)
+				instance.loadConfig(CNF)
+				instances.append(instance)
 
 	return instances
 

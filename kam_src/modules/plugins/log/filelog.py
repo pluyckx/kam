@@ -9,9 +9,8 @@ class FileLog(Logger):
 	CONFIG_ITEM_LINES = "max_lines"
 	CONFIG_ITEM_PATH = "path"
 
-	def __init__(self, callbacks):
-		self.loadConfig(callbacks["config"]())
-		
+	def __init__(self, data_dict):
+		super().__init__()	
 
 	def log(self, plugin, msg):
 		if isinstance(plugin, str):
@@ -72,13 +71,13 @@ class FileLog(Logger):
 		if path == None:
 			path = "/var/log/kam.log"
 		if max_lines == None:
-			max_lines = 0
+			max_lines = 200
 
 		self._path = path
 		try:
 			self._max_lines = int(max_lines)
 		except ValueError as ex:
-			self._max_lines = 0
+			self._max_lines = 200
 
 			syslog.syslog("[Kam-FileLog] Failed to parse max_lines from {0}; ValueError: {1}\n".format(max_lines, str(ex)))
 		except TypeError as ex:
@@ -91,6 +90,6 @@ class FileLog(Logger):
 
 		self.log(self, "Config read, path={0}; max_lines={1}\n".format(self._path, self._max_lines))
 
-def createInstance(callbacks):
-	return FileLog(callbacks)
+def createInstance(data_dict):
+	return FileLog(data_dict)
 

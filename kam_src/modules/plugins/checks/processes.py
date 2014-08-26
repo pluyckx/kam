@@ -8,13 +8,10 @@ class ProcessesCheck(BaseCheck):
 	CONFIG_ITEM_PROCESSES = "processes"
 	CONFIG_ITEM_MIN_COUNT = "min_{0}"
 
-	def __init__(self, callbacks):
+	def __init__(self, data_dict):
 		super().__init__()
-		self._debug = callbacks["debuggers"]()
-		self._log = callbacks["logs"]()
-
-		self.loadConfig(callbacks["config"]())
-
+		self._debug = data_dict["debuggers"]
+		self._log = data_dict["logs"]
 
 	def _run(self):
 		if len(self._processes) == 0:
@@ -108,6 +105,6 @@ class Process:
 	def __repr__(self):
 		return str(self)
 
-def createInstance(callbacks):
-	return ProcessesCheck(callbacks)
+def createInstance(data_dict):
+	return ProcessesCheck(data_dict)
 

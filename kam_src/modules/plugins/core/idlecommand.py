@@ -10,17 +10,16 @@ class IdleCommand(CoreBase):
 	CONFIG_ITEM_TIME = "idle_time"
 	CONFIG_ITEM_COMMAND = "idle_command"
 
-	def __init__(self, callbacks):
+	def __init__(self, data_dict):
 		super().__init__()
 
-		self._log = callbacks["logs"]()
-		self._debug = callbacks["debuggers"]()
+		self._log = data_dict["logs"]
+		self._debug = data_dict["debuggers"]
 
-		self._check_list = callbacks["checks"]()
+		self._check_list = data_dict["checks"]
 
 		self._last_alive = time.clock_gettime(time.CLOCK_MONOTONIC)
 
-		self.loadConfig(callbacks["config"]())
 
 	def _execute(self):
 		now = time.clock_gettime(time.CLOCK_MONOTONIC)
@@ -92,6 +91,6 @@ class IdleCommand(CoreBase):
 				                "", self.isEnabled())
 	
 
-def createInstance(callbacks):
-	return IdleCommand(callbacks)
+def createInstance(data_dict):
+	return IdleCommand(data_dict)
 

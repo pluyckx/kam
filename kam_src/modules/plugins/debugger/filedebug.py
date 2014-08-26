@@ -9,9 +9,8 @@ class FileDebug(Debugger):
 	CONFIG_ITEM_PATH = "path"
 	MSG_FORMAT = "{0} [{1}:{2}] {3} = {4}; {5} // {6}\n"
 
-	def __init__(self, callbacks):
-		self._logger = callbacks["logs"]()
-		self.loadConfig(callbacks["config"]())
+	def __init__(self, data_dict):
+		self._logger = data_dict["logs"]
 		
 
 	def _log(self, log_type, plugin, parameter_name, parameter_value, err_value, comments):
@@ -91,6 +90,6 @@ class FileDebug(Debugger):
 		if self._logger:
 			self._logger.log(self, "Config read, path={0}; max_lines={1}\n".format(self._path, self._max_lines))
 
-def createInstance(callbacks):
-	return FileDebug(callbacks)
+def createInstance(data_dict):
+	return FileDebug(data_dict)
 
