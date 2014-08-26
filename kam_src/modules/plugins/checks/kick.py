@@ -51,7 +51,6 @@ class KickCheck(BaseCheck):
 				self._files.append(f.strip())
 		else:
 			self._disable()
-			ret = CONFIG_LOADED_DISABLED
 
 		if self._log:
 			self._log.log(self,\
