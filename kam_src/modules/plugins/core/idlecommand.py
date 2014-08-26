@@ -26,8 +26,10 @@ class IdleCommand(CoreBase):
 		delta = now - self._last_alive
 
 		is_alive = False
+		no_checks_enabled = True
 		for check in self._check_list:
 			if check.isEnabled():
+				no_checks_enabled = False
 				if check.isAlive():
 					is_alive = True
 					break
@@ -35,7 +37,11 @@ class IdleCommand(CoreBase):
 		if is_alive:
 			self._last_alive = now
 		elif delta >= self._idle_time * 60:
-			os.system(self._idle_command)
+			if no_checks_enabled:
+				if self._log:
+					self._log.log(self, "No checks enable. We do not execute the idle command!")
+			else:
+				os.system(self._idle_command)
 
 		if self._log:
 			self._log.log(self, "It is now {0}, the server is alive: {1}, when the server is dead for {2} seconds, the server will shutdown".format(\
