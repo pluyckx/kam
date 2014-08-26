@@ -65,23 +65,44 @@ class ProcessorCheck(BaseCheck):
 			self._debug.log(self._debug.TYPE_CHECK, self, "per_cpu_load", per_cpu_percent, "", keep_alive_per_cpu)
 
 	def loadConfig(self, config):
-		try:
-			total = config[self.CONFIG_NAME].get(self.CONFIG_ITEM_TOTAL)
-		except KeyError:
-			total = None
+		err_value = ""
+		err_total = ""
+		err_per_cpu = ""
 
 		try:
-			per_cpu = config[self.CONFIG_NAME].get(self.CONFIG_ITEM_PER_CPU)
-		except KeyError:
+			section = config[self.CONFIG_NAME]
+		except KeyError as ex:
+			err_value = ex
+
+		if section:
+			try:
+				total = float(section.get(self.CONFIG_ITEM_TOTAL))
+			except ValueError as ex:
+				total = None
+				err_total = str(ex)
+
+			try:
+				per_cpu = section.get(self.CONFIG_ITEM_PER_CPU)
+			except ValueError as ex:
+				per_cpu = None
+				err_per_cpu = str(ex)
+		else:
+			total = None
 			per_cpu = None
 
-		self._total = float(total) if total else total
-		self._per_cpu = float(per_cpu) if per_cpu else per_cpu
+		self._total = float(total) if total else None
+		self._per_cpu = float(per_cpu) if per_cpu else None
 
 		if self._total != None or self._per_cpu != None:
 			self._enable()
 		else:
 			self._disable()
+
+		if self._debug:
+			self._debug.log(self._debug.TYPE_CONFIG, self, self.CONFIG_ITEM_TOTAL,\
+			                self._total, err_value + ";" + err_total, self.isEnabled())
+			self._debug.log(self._debug.TYPE_CONFIG, self, self.CONFIG_ITEM_PER_CPU,\
+			                self._per_cpu, err_value + ";" + err_per_cpu, self.isEnabled())
 
 		if self._log:
 			self._log.log(self, "Config file read!\nenabled = {0}\ntotal = {1}\nper_cpu = {2}\n".format(self.isEnabled(), self._total, self._per_cpu))

@@ -48,11 +48,19 @@ class ProcessesCheck(BaseCheck):
 
 	def loadConfig(self, config):
 		self._processes = []
-		try:
-			s_processes = config[self.CONFIG_NAME].get(self.CONFIG_ITEM_PROCESSES)
-		except KeyError:
-			s_processes = 0
+		err_value = ""
 
+		try:
+			section = config[self.CONFIG_NAME]
+		except KeyError as e:
+			section = None
+			err_value = e
+
+		if section:
+			s_processes = section.get(self.CONFIG_ITEM_PROCESSES)
+		else:
+			s_processes = None
+		
 		if s_processes:
 			s_processes = s_processes.split(",")
 			for s_process in s_processes:
@@ -62,7 +70,7 @@ class ProcessesCheck(BaseCheck):
 					try:
 						min_count = int(min_count)
 					except Exception as ex:
-						self._log.log(str(ex))
+						err_value += str(ex) + ";"
 
 				if not min_count:
 					min_count = 1
@@ -73,6 +81,10 @@ class ProcessesCheck(BaseCheck):
 			self._enable()
 		else:
 			self._disable()
+
+		if self._debug:
+			self._debug.log(self._debug.TYPE_CONFIG, self, self.CONFIG_ITEM_PROCESSES,\
+			                self._processes, err_value, self.isEnabled())
 
 		if self._log:
 			self._log.log(self, "Config loaded: enabled={0}; processes={1}\n".format(self.isEnabled(), self._processes))
