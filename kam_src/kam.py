@@ -48,6 +48,7 @@ def loadModules(path):
 			module = importlib.import_module(imp)
 			if hasattr(module, "createInstance"):
 				instance = module.createInstance(data_dict)
+				instance.loadConfig(CNF)
 				instances.append(instance)
 
 	return instances
