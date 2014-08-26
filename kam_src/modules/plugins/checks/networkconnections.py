@@ -66,8 +66,6 @@ class NetworkConnectionsCheck(BaseCheck):
 					except Exception as ex:
 						log.log(str(ex) + "\n")
 						err_value += str(s) + "; "
-		except KeyError as e:
-			err_value += str(e) + ";"
 
 		if len(self._addresses) > 0:
 			self._enable()
