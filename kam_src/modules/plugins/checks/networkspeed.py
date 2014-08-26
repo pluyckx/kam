@@ -51,39 +51,63 @@ class NetworkSpeedCheck(BaseCheck):
 			                "download_speed", dl, "", dl >= self._down)
 
 	def loadConfig(self, config):
-		try:
-			down = self._convertToFloat(config[self.CONFIG_NAME].get(self.CONFIG_ITEM_DOWN_SPEED))
-		except KeyError:
-			down = None
+		err_value = ""
+		err_up = ""
+		err_down = ""
 
 		try:
-			up = self._convertToFloat(config[self.CONFIG_NAME].get(self.CONFIG_ITEM_UP_SPEED))
-		except KeyError:
-			up = None
+			section = config[self.CONFIG_NAME]
+		except KeyError as ex:
+			err_value = ex
+			section = None
 
-		self._down = down
-		self._up = up
+		if section:
+			down = self._convertToFloat(section.get(self.CONFIG_ITEM_DOWN_SPEED))
+			up = self._convertToFloat(section.get(self.CONFIG_ITEM_UP_SPEED))
+
+		if isinstance(down, float):
+			self._down = down
+		else:
+			err_down = down
+			self._down = None
+
+		if isinstance(down, float):
+			self._up = up
+		else:
+			err_up = up
+			self._up = None
 
 		if self._down != None or self._up != None:
 			self._enable()
 		else:
 			self._disable()
 
+		if self._debug:
+			self._debug.log(self._debug.TYPE_CONFIG, self, self._CONFIG_ITEM_DOWN_SPEED,\
+			                self._down, err_value + ";" + err_down, self.isEnabled())
+			self._debug.log(self._debug.TYPE_CONFIG, self, self._CONFIG_ITEM_UP_SPEED,\
+			                self._up, err_value + ";" + err_up, self.isEnabled())
+
+
 		if self._log:
 			self._log.log(self, "Config file read.\nenabled = {0}\ndownload_speed = {1}\nupload_speed = {2}\n".format(self.isEnabled(), self._down, self._up))
 
 	def _convertToFloat(self, s):
 		if not s:
-			return None
+			return "Parameter is \"{0}\"".format(s)
 
 		last_ch = s[len(s)-1]
 		if last_ch.isdigit():
-			return float(s)
+			try:
+				f = float(s)
+				return f
+			except ValueError as e:
+				return str(e)
 		else:
 			try:
 				value = float(s[:len(s)-1])
-			except ValueError:
-				return None
+			except ValueError as e:
+				return str(e)
 
 			if last_ch == 'K':
 				value *= 1024
