@@ -83,9 +83,9 @@ class NetworkSpeedCheck(BaseCheck):
 			self._disable()
 
 		if self._debug:
-			self._debug.log(self._debug.TYPE_CONFIG, self, self._CONFIG_ITEM_DOWN_SPEED,\
+			self._debug.log(self._debug.TYPE_CONFIG, self, self.CONFIG_ITEM_DOWN_SPEED,\
 			                self._down, err_value + ";" + err_down, self.isEnabled())
-			self._debug.log(self._debug.TYPE_CONFIG, self, self._CONFIG_ITEM_UP_SPEED,\
+			self._debug.log(self._debug.TYPE_CONFIG, self, self.CONFIG_ITEM_UP_SPEED,\
 			                self._up, err_value + ";" + err_up, self.isEnabled())
 
 
