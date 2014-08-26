@@ -10,10 +10,10 @@ class ProcessorCheck(BaseCheck):
 	CONFIG_ITEM_TOTAL = "total_load"
 	CONFIG_ITEM_PER_CPU = "per_cpu_load"
 
-	def __init__(self, callbacks):
+	def __init__(self, data_dict):
 		super().__init__()
-		self._debug = callbacks["debuggers"]()
-		self._log = callbacks["logs"]()
+		self._debug = data_dict["debuggers"]
+		self._log = data_dict["logs"]
 
 		self._total = 50
 		self._per_cpu = 40
@@ -21,8 +21,6 @@ class ProcessorCheck(BaseCheck):
 		self._prev_times = []
 		for i in range(0, os.cpu_count()):
 			self._prev_times.append((0.0, 0.0))
-
-		self.loadConfig(callbacks["config"]())
 
 
 	def _run(self):
@@ -88,6 +86,6 @@ class ProcessorCheck(BaseCheck):
 		if self._log:
 			self._log.log(self, "Config file read!\nenabled = {0}\ntotal = {1}\nper_cpu = {2}\n".format(self.isEnabled(), self._total, self._per_cpu))
 
-def createInstance(callbacks):
-	return ProcessorCheck(callbacks)
+def createInstance(data_dict):
+	return ProcessorCheck(data_dict)
 

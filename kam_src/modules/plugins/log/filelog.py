@@ -9,9 +9,8 @@ class FileLog(Logger):
 	CONFIG_ITEM_LINES = "max_lines"
 	CONFIG_ITEM_PATH = "path"
 
-	def __init__(self, callbacks):
-		self.loadConfig(callbacks["config"]())
-		
+	def __init__(self, data_dict):
+		super().__init__()	
 
 	def log(self, plugin, msg):
 		if isinstance(plugin, str):
@@ -91,6 +90,6 @@ class FileLog(Logger):
 
 		self.log(self, "Config read, path={0}; max_lines={1}\n".format(self._path, self._max_lines))
 
-def createInstance(callbacks):
-	return FileLog(callbacks)
+def createInstance(data_dict):
+	return FileLog(data_dict)
 

@@ -7,12 +7,10 @@ class KickCheck(BaseCheck):
 	CONFIG_NAME = "kick"
 	CONFIG_ITEM_FILES = "files"
 
-	def __init__(self, callbacks):
+	def __init__(self, data_dict):
 		super().__init__()
-		self._debug = callbacks["debuggers"]()
-		self._log = callbacks["logs"]()
-
-		self.loadConfig(callbacks["config"]())
+		self._debug = data_dict["debuggers"]
+		self._log = data_dict["logs"]
 
 	def _run(self):
 		alive = []
@@ -36,10 +34,15 @@ class KickCheck(BaseCheck):
 		err_value = ""
 
 		try:
-			files = config[self.CONFIG_NAME].get(self.CONFIG_ITEM_FILES).strip()
+			section = config[self.CONFIG_NAME]
 		except KeyError as e:
-			files = None
+			section = None
 			err_value = str(e)
+		
+		if section:
+			files = section.get(self.CONFIG_ITEM_FILES).strip()
+		else:
+			files = None
 
 		if files:
 			self._enable()
@@ -48,6 +51,7 @@ class KickCheck(BaseCheck):
 				self._files.append(f.strip())
 		else:
 			self._disable()
+			ret = CONFIG_LOADED_DISABLED
 
 		if self._log:
 			self._log.log(self,\
@@ -59,5 +63,6 @@ class KickCheck(BaseCheck):
 			                self.CONFIG_ITEM_FILES, files,\
 			                err_value, self.isEnabled())
 
-def createInstance(callbacks):
-	return KickCheck(callbacks)
+
+def createInstance(data_dict):
+	return KickCheck(data_dict)

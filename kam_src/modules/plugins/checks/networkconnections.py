@@ -8,12 +8,10 @@ class NetworkConnectionsCheck(BaseCheck):
 	CONFIG_NAME = "network"
 	CONFIG_ITEM_CONNECTIONS = "connections"
 
-	def __init__(self, callbacks):
+	def __init__(self, data_dict):
 		super().__init__()
-		self._debug = callbacks["debuggers"]()
-		self._log = callbacks["logs"]()
-
-		self.loadConfig(callbacks["config"]())
+		self._debug = data_dict["debuggers"]
+		self._log = data_dict["logs"]
 
 	def _run(self):
 		netstat_out = subprocess.getoutput("netstat --inet -a | grep ESTABLISHED | awk '{print $5}'")
@@ -51,7 +49,13 @@ class NetworkConnectionsCheck(BaseCheck):
 		err_value = ""
 
 		try:
-			addresses = config[self.CONFIG_NAME].get(self.CONFIG_ITEM_CONNECTIONS)
+			section = config[self.CONFIG_NAME]
+		except KeyError as e:
+			section = None
+			err_value = str(e) + "; "
+
+		if section:
+			addresses = section.get(self.CONFIG_ITEM_CONNECTIONS)
 
 			if addresses:
 				addresses = addresses.split(",")
@@ -61,7 +65,7 @@ class NetworkConnectionsCheck(BaseCheck):
 						self._addresses.append(addr)
 					except Exception as ex:
 						log.log(str(ex) + "\n")
-						err_value += str(s) + ";"
+						err_value += str(s) + "; "
 		except KeyError as e:
 			err_value += str(e) + ";"
 
@@ -123,5 +127,5 @@ class NetworkAddress:
 	def __repr__(self):
 		return str(self)
 
-def createInstance(callbacks):
-	return NetworkConnectionsCheck(callbacks)
+def createInstance(data_dict):
+	return NetworkConnectionsCheck(data_dict)
