@@ -1,3 +1,32 @@
+##\package processes
+# \brief This plugin checks if some processes are running. If so, the machine is kept alive.
+#
+# In the config file you can create a sesction [process].
+# Here you can define a comma separated list of processes: \e processes, which the plugin must monitor.
+# For each process defined in the list, another field is available in this section: min_{process_name}.
+# This field defines the minimum amount of times the process must run to keep the machine alive.
+# 
+# For example, the process \e sshd is always running, at least with one instance.
+# When connected, two more <em>ssh deamons</em> are started for each connection.
+# So to keep the machine alive when connected through \e ssh, you should use: <em>min_sshd = 2</em>
+#
+# \author Philip Luyckx
+# \copyright GNU Public License
+
+# This file is part of Keep Alive Monitor (kam).
+#
+# Keep Alive Monitor is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Keep Alive Monitor is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Keep Alive Monitor.  If not, see <http://www.gnu.org/licenses/>.
 
 from modules.plugins.checks.basecheck import BaseCheck
 

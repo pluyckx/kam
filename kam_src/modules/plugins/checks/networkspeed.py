@@ -1,3 +1,32 @@
+##\package networkspeed
+# \brief This plugin checks the current network activity.
+#
+# In the config file you can define a section [network] with the fields upload_speed and download_speed.
+# They define thresholds and when more bandwidth is used, the machine is kept alive.
+# This plugin calculates the bandwidth between two successive calls of check().
+# So the first check() is actually a calibration and if needed, you should ignore the value of isAlive().
+# Starting from the second call of check(), isAlive() contains a valid value.
+#
+# In the fields you can use the suffixes K and M.
+# 1K = 1024bytes, 1M = 1024 * 1024 bytes
+#
+# \author Philip Luyckx
+# \copyright GNU Public License
+
+# This file is part of Keep Alive Monitor (kam).
+#
+# Keep Alive Monitor is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Keep Alive Monitor is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Keep Alive Monitor.  If not, see <http://www.gnu.org/licenses/>.
 
 from modules.plugins.checks.basecheck import BaseCheck
 import psutil

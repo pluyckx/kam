@@ -1,3 +1,35 @@
+##\package processor
+# \brief This plugin checks the processor usage to keep the machine alive
+#
+# In the config file you can define a section [processor].
+# Here you can use two fields: \e total_load and \e per_cpu_load.
+# 
+# The \e total_load field defines the threshold of the avarage cpu load over all cpus.
+# This value is a value between 0 and 100.
+# 100 is used when all cores are 100% occupied and thus 0% idle.
+#
+# The \e per_cpu_load is a threshold per cpu.
+# This value is also between 0 and 100.
+#
+# Look at the documentatino of the config file for more information.
+#
+# \author Philip Luyckx
+# \copyright GNU Public License
+
+# This file is part of Keep Alive Monitor (kam).
+#
+# Keep Alive Monitor is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Keep Alive Monitor is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Keep Alive Monitor.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 
