@@ -29,8 +29,8 @@ CNF = configparser.ConfigParser()
 
 data_dict = {}
 data_dict["checks"] = checks
-data_dict["logs"] = logmanager
-data_dict["debuggers"] = debugmanager
+data_dict["log"] = logmanager
+data_dict["debug"] = debugmanager
 data_dict["config"] = CNF
 
 # Load all modules from a path

@@ -10,8 +10,8 @@ class NetworkSpeedCheck(BaseCheck):
 
 	def __init__(self, data_dict):
 		super().__init__()
-		self._debug = data_dict["debuggers"]
-		self._log = data_dict["logs"]
+		self._debug = data_dict["debug"]
+		self._log = data_dict["log"]
 
 		self._last_check = time.clock_gettime(time.CLOCK_MONOTONIC)
 		self._prev_down = 0

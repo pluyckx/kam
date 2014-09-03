@@ -13,8 +13,8 @@ class IdleCommand(CoreBase):
 	def __init__(self, data_dict):
 		super().__init__()
 
-		self._log = data_dict["logs"]
-		self._debug = data_dict["debuggers"]
+		self._log = data_dict["log"]
+		self._debug = data_dict["debug"]
 
 		self._check_list = data_dict["checks"]
 

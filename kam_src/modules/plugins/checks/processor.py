@@ -12,8 +12,8 @@ class ProcessorCheck(BaseCheck):
 
 	def __init__(self, data_dict):
 		super().__init__()
-		self._debug = data_dict["debuggers"]
-		self._log = data_dict["logs"]
+		self._debug = data_dict["debug"]
+		self._log = data_dict["log"]
 
 		self._total = 50
 		self._per_cpu = 40

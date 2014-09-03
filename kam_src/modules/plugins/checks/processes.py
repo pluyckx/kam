@@ -10,8 +10,8 @@ class ProcessesCheck(BaseCheck):
 
 	def __init__(self, data_dict):
 		super().__init__()
-		self._debug = data_dict["debuggers"]
-		self._log = data_dict["logs"]
+		self._debug = data_dict["debug"]
+		self._log = data_dict["log"]
 
 	def _run(self):
 		if len(self._processes) == 0:
