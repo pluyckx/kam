@@ -1,3 +1,27 @@
+##\package networkconnections
+# \brief This plugin checks networkconnections if they are connected.
+#
+# In the config file you can define a section [network] with the field connections.
+# This field contains a list of ip-addresses (a.b.c.d/32) or network ranges (a.b.c.d/n, n < 32) separated by commas.
+# If one connection is found within a range defined in the list, the machine is kept alive.
+#
+# \author Philip Luyckx
+# \copyright GNU Public License
+
+# This file is part of Keep Alive Monitor (kam).
+#
+# Keep Alive Monitor is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Keep Alive Monitor is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Keep Alive Monitor.  If not, see <http://www.gnu.org/licenses/>.
 
 
 from modules.plugins.checks.basecheck import BaseCheck
@@ -10,8 +34,8 @@ class NetworkConnectionsCheck(BaseCheck):
 
 	def __init__(self, data_dict):
 		super().__init__()
-		self._debug = data_dict["debuggers"]
-		self._log = data_dict["logs"]
+		self._debug = data_dict["debug"]
+		self._log = data_dict["log"]
 
 	def _run(self):
 		netstat_out = subprocess.getoutput("netstat --inet -a | grep ESTABLISHED | awk '{print $5}'")

@@ -1,3 +1,26 @@
+##\package periodsleep
+# \brief Kam periodically execute the check plugins. This \e period is controlled by this plugin.
+#
+# Check the config file for more information.
+# Look for the field \e period in the section \e [global]
+#
+# \author Philp Luyckx
+# \copyright GNU Public License
+
+# This file is part of Keep Alive Monitor (kam).
+#
+# Keep Alive Monitor is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Keep Alive Monitor is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Keep Alive Monitor.  If not, see <http://www.gnu.org/licenses/>.
 
 from modules.plugins.core.base import CoreBase
 
@@ -9,8 +32,8 @@ class PeriodSleep(CoreBase):
 
 	def __init__(self, data_dict):
 		super().__init__()
-		self._debug = data_dict["debuggers"]
-		self._log = data_dict["logs"]
+		self._debug = data_dict["debug"]
+		self._log = data_dict["log"]
 		self._last_run = time.clock_gettime(time.CLOCK_MONOTONIC)
 
 

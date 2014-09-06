@@ -1,5 +1,27 @@
 #!/usr/bin/python3
 
+##\package kam
+#This package contains the startup code.
+#
+# \author Philip Luyckx
+# \copyright GNU Public License
+
+# This file is part of Keep Alive Monitor (kam).
+#
+# Keep Alive Monitor is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Keep Alive Monitor is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Keep Alive Monitor.  If not, see <http://www.gnu.org/licenses/>.
+
+
 import os, sys, importlib
 import configparser
 import traceback
@@ -29,8 +51,8 @@ CNF = configparser.ConfigParser()
 
 data_dict = {}
 data_dict["checks"] = checks
-data_dict["logs"] = logmanager
-data_dict["debuggers"] = debugmanager
+data_dict["log"] = logmanager
+data_dict["debug"] = debugmanager
 data_dict["config"] = CNF
 
 # Load all modules from a path
