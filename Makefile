@@ -58,6 +58,12 @@ uninstall-0.x:
 	@if [ -e "$(ETC_DIR)/version" ]; \
 	then \
 		version=$$(cat "$(ETC_DIR)/version"); \
+	elif [ -e "$(ETC_DIR)" ]; \
+		version="0.?"; \
+	fi; \
+	\
+	if [ "$$(version)" != "" ]; \
+	then \
 		echo $$(version) | grep "^0\." 2>&1 > /dev/null; \
 		if [ $$? -eq 0 ]; \
 		then \
