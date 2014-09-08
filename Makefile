@@ -57,7 +57,7 @@ install: python3 python3-psutil
 uninstall-0.x:
 	@if [ -e "$(ETC_DIR)/version" ]; \
 	then \
-		version=$$(cat "$(ETC_DIR)/version"; \
+		version=$$(cat "$(ETC_DIR)/version"); \
 		cat $$(version) | grep "^0\." 2>&1 > /dev/null; \
 		if [ $$? -eq 0 ]; \
 		then \
