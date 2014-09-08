@@ -53,21 +53,34 @@ install: python3 python3-psutil
 	update-rc.d kam defaults
 	service kam start
 
-.PHONY: uninstall
-uninstall:
-	@if [ ! -e "$(ETC_DIR)/version" ]; \
+.PHONY: uninstall-0.x
+uninstall-0.x:
+	@if [ -e "$(ETC_DIR)/version" ]; \
 	then \
-		echo "Kam not installed"; \
-		exit 1; \
+		version=$$(cat "$(ETC_DIR)/version"; \
+		cat $$(version) | grep "^0\." 2>&1 > /dev/null; \
+		if [ $$? -eq 0 ]; \
+		then \
+			echo "uninstall-0.x version $$(version)"; \
+			rm /usr/sbin/kamd; \
+			rm /etc/init.d/kam; \
+			update-rc.d kam remove; \
+		fi; \
+	fi;		
+
+.PHONY: uninstall
+uninstall: uninstall-0.x
+	@if [ -e "$(ETC_DIR)/version" ]; \
+	then \
+		echo "Uninstall version $$(cat \"$(ETC_DIR)/version\")"; \
+		service kam stop; \
+		rm /etc/init.d/kam; \
+		update-rc.d kam remove; \
+		\
+		rm $(BIN_DIR)/$(BIN_NAME); \
+		rm -r $(INSTALL_DIR); \
+		rm -r $(ETC_DIR); \
 	fi
-
-	service kam stop
-	rm /etc/init.d/kam
-	update-rc.d kam remove
-
-	rm $(BIN_DIR)/$(BIN_NAME)
-	rm -r $(INSTALL_DIR)
-	rm -r $(ETC_DIR)
 
 .PHONY: update
 update:
