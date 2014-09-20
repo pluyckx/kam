@@ -11,5 +11,6 @@ setup(name="kam",
       license="GPLV2",
       packages=find_packages(),
       zip_safe=False,
-      install_requeres=['psutils>=1.2.1']
+      install_requeres=['psutils>=1.2.1'],
+      scripts="src/bin/kam.py"
 )
