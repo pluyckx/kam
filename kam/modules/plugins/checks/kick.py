@@ -30,7 +30,7 @@
 
 import os
 
-from modules.plugins.checks.basecheck import BaseCheck
+from kam.modules.plugins.checks.basecheck import BaseCheck
 
 class KickCheck(BaseCheck):
 	CONFIG_NAME = "kick"

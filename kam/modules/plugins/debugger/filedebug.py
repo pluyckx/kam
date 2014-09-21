@@ -23,7 +23,7 @@
 
 import os
 from datetime import datetime
-from modules.plugins.debugger.debugger import Debugger
+from kam.modules.plugins.debugger.debugger import Debugger
 
 class FileDebug(Debugger):
 	CONFIG_NAME = "filedebug"

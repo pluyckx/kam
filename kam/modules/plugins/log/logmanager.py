@@ -21,7 +21,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Keep Alive Monitor.  If not, see <http://www.gnu.org/licenses/>.
 
-from modules.plugins.log.logger import Logger
+from kam.modules.plugins.log.logger import Logger
 
 class LogManager(Logger):
 	

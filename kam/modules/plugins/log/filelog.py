@@ -24,7 +24,7 @@
 import os
 import syslog
 from datetime import datetime
-from modules.plugins.log.logger import Logger
+from kam.modules.plugins.log.logger import Logger
 
 class FileLog(Logger):
 	CONFIG_NAME = "filelog"
