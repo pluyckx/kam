@@ -1,8 +1,7 @@
-##\package debugmanager
-# \brief This debugger can hold other debugger objects and then passes all log messages to all of them.
+##\package logmanager
+# \brief A manager like the DebugManager, but for logging.
 #
-# When you want to use multiple debuggers, you can use the DebugManager to hold all the debuggers.
-# When you want to log, call the log() function of the DebugManager and he will delegate the log call to all debuggers he is holding.
+# This manager can hold multiple loggers and will delegate calls to the log() function to them.
 #
 # \author Philip Luyckx
 # \copyright GNU Public License
@@ -22,19 +21,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Keep Alive Monitor.  If not, see <http://www.gnu.org/licenses/>.
 
-from modules.plugins.debugger.debugger import Debugger
+from kam.modules.plugins.log.logger import Logger
 
-class DebugManager(Debugger):
+class LogManager(Logger):
 	
 	def __init__(self):
 		super().__init__()
-		self._debuggers = []
+		self._loggers = []
 
-	def _log(self, log_type, plugin, parameter_name, parameter_value, err_value, comments):
-		for debugger in self._debuggers:
-			debugger.log(log_type, plugin, parameter_name, parameter_value, err_value, comments)
+	def _log(self, plugin, msg):
+		for logger in self._loggers:
+			logger.log(plugin, msg)
 
-	def add(self, debugger):
-		if isinstance(debugger, Debugger):
+	def add(self, logger):
+		if isinstance(logger, Logger):
 			self._enable()
-			self._debuggers.append(debugger)
+			self._loggers.append(logger)

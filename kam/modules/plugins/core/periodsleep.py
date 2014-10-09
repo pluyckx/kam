@@ -22,7 +22,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Keep Alive Monitor.  If not, see <http://www.gnu.org/licenses/>.
 
-from modules.plugins.core.base import CoreBase
+from kam.modules.plugins.core.base import CoreBase
 
 import time
 

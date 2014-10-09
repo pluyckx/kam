@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!python3
 
 ##\package kam
 #This package contains the startup code.
@@ -22,20 +22,20 @@
 # along with Keep Alive Monitor.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import os, sys, importlib
+import os, sys, importlib, pkgutil
 import configparser
 import traceback
 import time
 import subprocess
 
-import utils.utils as utils
+import kam.utils.utils as utils
 
-from modules.plugins.log.logmanager import LogManager
-from modules.plugins.debugger.debugmanager import DebugManager
-from modules.exceptions.exceptions import KamFunctionNotImplemented
+from kam.modules.plugins.log.logmanager import LogManager
+from kam.modules.plugins.debugger.debugmanager import DebugManager
+from kam.modules.exceptions.exceptions import KamFunctionNotImplemented
 
-from modules.plugins.core.periodsleep import PeriodSleep
-from modules.plugins.core.idlecommand import IdleCommand
+from kam.modules.plugins.core.periodsleep import PeriodSleep
+from kam.modules.plugins.core.idlecommand import IdleCommand
 
 # Move to the directory where this file is lcoated
 # We are using dynamic importing and it works relative to the
@@ -60,12 +60,18 @@ data_dict["config"] = CNF
 def loadModules(path):
 	# The following code will dynamically load all check plugins
 	instances = []
-	import_path = path.replace("/", ".") + "{0}"
-	dirs = os.listdir(path)
+	print("importing from {0}".format(path))
+	loader = pkgutil.get_loader(path)
+	if not loader:
+		print("Could not find loader for {0}".format(path))
+		return instances
+
+	import_path = os.path.dirname(loader.path)
+	dirs = os.listdir(import_path)
 	for d in dirs:
 		if d[-3:] == ".py" and d != "__init__.py":
 			f = d[:-3]
-			imp = import_path.format(f)
+			imp = "{0}.{1}".format(path, f)
 			logmanager.log("Main", "importing {0}\n".format(imp))
 			module = importlib.import_module(imp)
 			if hasattr(module, "createInstance"):
@@ -83,17 +89,17 @@ if os.path.isfile(CNF_FILE):
 	CNF.read(CNF_FILE)
 
 # load the log modules
-logs = loadModules("modules/plugins/log/")
+logs = loadModules("kam.modules.plugins.log")
 for log in logs:
 	logmanager.add(log)
 
 # load the debug modules
-debuggers = loadModules("modules/plugins/debugger/")
+debuggers = loadModules("kam.modules.plugins.debugger")
 for debugger in debuggers:
 	debugmanager.add(debugger)
 
 # load the core modules
-core = loadModules("modules/plugins/core/")
+core = loadModules("kam.modules.plugins.core")
 
 # For now we must remove some core modules form the list and assign them to a
 # specific variable, so we can call them in the right order.
@@ -115,7 +121,7 @@ if idle_command:
 	core.remove(idle_command)
 
 # load all check modules
-checks_tmp = loadModules("modules/plugins/checks/")
+checks_tmp = loadModules("kam.modules.plugins.checks")
 
 for check in checks_tmp:
 	logmanager.log("Main", "Add check to list: {0}".format(check.__class__.__name__))

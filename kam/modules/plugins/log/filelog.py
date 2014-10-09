@@ -1,7 +1,7 @@
-##\package filedebug
-# \brief This is a debugger and he writes everything to a file.
+##\package filelog
+# \brief Logs everything to a file
 #
-# The debugger is configurated through the section \e [filedebug] and the properties \e path and \e max_lines.
+# Look for the fields \e path and \e max_lines in the section \e [filelog] for more information.
 #
 # \author Philip Luyckx
 # \copyright GNU Public License
@@ -22,20 +22,19 @@
 # along with Keep Alive Monitor.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import syslog
 from datetime import datetime
-from modules.plugins.debugger.debugger import Debugger
+from kam.modules.plugins.log.logger import Logger
 
-class FileDebug(Debugger):
-	CONFIG_NAME = "filedebug"
+class FileLog(Logger):
+	CONFIG_NAME = "filelog"
 	CONFIG_ITEM_LINES = "max_lines"
 	CONFIG_ITEM_PATH = "path"
-	MSG_FORMAT = "{0} [{1}:{2}] {3} = {4}; {5} // {6}\n"
 
 	def __init__(self, data_dict):
-		self._logger = data_dict["log"]
-		
+		super().__init__()	
 
-	def _log(self, log_type, plugin, parameter_name, parameter_value, err_value, comments):
+	def log(self, plugin, msg):
 		if isinstance(plugin, str):
 			plugin_name = plugin
 		else:
@@ -47,11 +46,13 @@ class FileDebug(Debugger):
 				for line in f:
 					content.append(line.rstrip("\n"))
 
-		now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-		line = self.MSG_FORMAT.format(now, plugin_name, log_type,\
-		                                  parameter_name, parameter_value,\
-		                                  err_value, comments)
+		# we do not allow to print multiple lines, make one line of it!
+		msg = msg.rstrip("\n").replace("\n", "; ")
+		line = "{0} [{1}]: {2}\n".format(\
+		                            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),\
+		                            plugin_name,\
+		                            msg)
+		                            
 
 		if len(content) + 1 < self._max_lines or self._max_lines == 0:
 			with open(self._path, "a") as f:
@@ -83,35 +84,34 @@ class FileDebug(Debugger):
 				path = None
 
 			self._enable()
-
 		else:
 			self._disable()
 			max_lines = None
 			path = None
+			syslog.syslog("[Kam-FileLog] No file log specified. File logging not enabled")
 
 		if path == None:
-			path = "/var/log/kam.debug"
+			path = "/var/log/kam.log"
 		if max_lines == None:
-			max_lines = 0
+			max_lines = 200
 
 		self._path = path
 		try:
 			self._max_lines = int(max_lines)
-		except ValueError:
-			self._max_lines = 0
+		except ValueError as ex:
+			self._max_lines = 200
 
-			if self._logger:
-				self._logger.log("[DebugLog] Failed to parse max_lines from {0}\n".format(max_lines))
-		except TypeError:
+			syslog.syslog("[Kam-FileLog] Failed to parse max_lines from {0}; ValueError: {1}\n".format(max_lines, str(ex)))
+		except TypeError as ex:
 			self._max_lines = 0
+			syslog.syslog("[Kam-FileLog] Failed to parse max_lines from {0}; Type Error {1}\n".format(max_lines, str(ex)))
 
 		directory = os.path.dirname(self._path)
 		if not os.path.exists(directory):
 			os.makedirs(directory)
 
-		if self._logger:
-			self._logger.log(self, "Config read, path={0}; max_lines={1}\n".format(self._path, self._max_lines))
+		self.log(self, "Config read, path={0}; max_lines={1}\n".format(self._path, self._max_lines))
 
 def createInstance(data_dict):
-	return FileDebug(data_dict)
+	return FileLog(data_dict)
 

@@ -24,7 +24,7 @@
 # along with Keep Alive Monitor.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from modules.plugins.checks.basecheck import BaseCheck
+from kam.modules.plugins.checks.basecheck import BaseCheck
 
 import re, subprocess
 
