@@ -35,6 +35,7 @@ from kam.modules.plugins.checks.basecheck import BaseCheck
 class KickCheck(BaseCheck):
 	CONFIG_NAME = "kick"
 	CONFIG_ITEM_FILES = "files"
+	DEFAULT_PATH = "/tmp/kam_kick"
 
 	def __init__(self, data_dict):
 		super().__init__()
@@ -73,13 +74,13 @@ class KickCheck(BaseCheck):
 		else:
 			files = None
 
+		self._files.append(self.DEFAULT_PATH)
+		self._enable()
+
 		if files:
-			self._enable()
 			files = files.split(",")
 			for f in files:
 				self._files.append(f.strip())
-		else:
-			self._disable()
 
 		if self._log:
 			self._log.log(self,\
@@ -88,7 +89,7 @@ class KickCheck(BaseCheck):
 		
 		if self._debug:
                         self._debug.log(self._debug.TYPE_CONFIG, self,\
-			                self.CONFIG_ITEM_FILES, files,\
+			                self.CONFIG_ITEM_FILES, self._files,\
 			                err_value, self.isEnabled())
 
 
