@@ -59,9 +59,9 @@ class PeriodSleep(CoreBase):
 		else:
 			sleep = None
 
-		if sleep != None and sleep > 10:
+		self._enable()
+		if sleep != None and sleep >= 10:
 			self._sleep = sleep
-			self._enable()
 		else:
 			sleep = 0
 			self._sleep = 10
