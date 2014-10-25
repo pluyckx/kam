@@ -49,6 +49,7 @@ logmanager = LogManager()
 debugmanager = DebugManager()
 checks = []
 CNF = configparser.ConfigParser()
+idle_command_ran = False
 
 data_dict = {}
 data_dict["checks"] = checks
@@ -88,6 +89,11 @@ def loadModules(path):
 # Some paths we will use later in the script
 CNF_DIR = "/etc/kam/"
 CNF_FILE = os.path.join(CNF_DIR, "kam.conf")
+
+def _idle_command_ran():
+	idle_command_ran = True
+
+data_dict["idle_command_callback"] = _idle_command_ran
 
 # The main function which normally never stops, unless an exception occurs
 def main():
@@ -135,7 +141,7 @@ def main():
 
 
 	try:
-		while True:
+		while not idle_command_ran:
 			for check in checks:
 				logmanager.log("Main", "Checking {0}".format(check.__class__.__name__))
 				check.check()
@@ -154,6 +160,7 @@ if __name__ == "__main__":
 			sys.exit(0) # we are the first run, we must exit
 
 		main()
+		logmanager.log("Main", "main exited -> idle command ran")
 		pollmanager.stop()
 	except OSError as e:
 		logmanager.log("Main", "Fork failed! {0}".format(str(e)))
