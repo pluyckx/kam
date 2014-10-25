@@ -72,6 +72,9 @@ class ProcessorCheck(BaseCheck):
 			delta_time = total_time - prev_total
 			delta_idle = cpu.idle - prev_idle
 
+			if delta_time == 0:
+				delta_time = 1
+
 			percent = (1 - delta_idle / delta_time) * 100
 			total += percent
 
