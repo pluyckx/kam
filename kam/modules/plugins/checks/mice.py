@@ -54,9 +54,9 @@ class MiceCheck(BaseCheck):
 			self._read_from.clear()
 
 	def _mouseActive(self, fd, event):
-		self._alive()
 		for f in self._files:
 			if f.fileno() == fd:
+				self._alive()
 				while self._pollmanager.hasInput(f.fileno()):
 					buf = f.read1(100)
 
