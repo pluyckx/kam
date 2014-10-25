@@ -1,17 +1,19 @@
 #!/usr/bin/python3
 
-import sys, os
+import sys, os, shutil
 from distutils.core import setup, Command
 from distutils.command.install import install
 import subprocess
 
 class UpdateRc(install):
 	def run(self):
+		if os.path.exists("/etc/kam/kam.conf"):
+			shutil.copyfile("/etc/kam/kam.conf", "/etc/kam/kam.conf.back")
+
 		super().run()
 
 		print("Update-rc.d")
 		subprocess.call(["update-rc.d", "kam", "defaults"])
-
 
 def check_version():
 	(major, minor, _, _, _) = sys.version_info
