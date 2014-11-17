@@ -52,7 +52,11 @@ class ProcessesCheck(BaseCheck):
 		
 		found_processes = []
 		for process in psutil.process_iter():
-			found_processes.append(process.name)
+			try:
+				found_processes.append(process.name)
+			except psutil._error.NoSuchProcess:
+				pass
+				# just ignore the error, the process is stopped between the process_iter() call and append call
 
 		alive = None
 
