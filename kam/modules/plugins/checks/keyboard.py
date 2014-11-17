@@ -40,27 +40,26 @@ class KeyboardCheck(BaseCheck):
 		self._pollmanager = data_dict["pollmanager"]
 		self._files = []
 
-		if self._debug:
-			self._read_from = []
-
-	def isAlive(self):
-		alive = super().isAlive()
-		self._dead()
-		return alive
+		self._read_from = []
 
 	def _run(self):
+		if len(self._read_from) > 0:
+			self._alive()
+		else:
+			self._dead()
+
 		if self._debug:
 			self._debug.log(self._debug.TYPE_CHECK, self, "read from: ", self._read_from, "", super().isAlive())
-			self._read_from.clear()
+
+		self._read_from.clear()
 
 	def _keyboardActive(self, fd, event):
 		for f in self._files:
 			if f.fileno() == fd:
-				self._alive()
 				while self._pollmanager.hasInput(f.fileno()):
 					buf = f.read1(100)
 
-				if self._debug and not f.name in self._read_from:
+				if not f.name in self._read_from:
 					self._read_from.append(f.name)
 
 	def loadConfig(self, config):
