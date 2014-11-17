@@ -1,90 +1,13 @@
 INSTALLATION
 ------------
-Execute install.sh. This script will do all necessray stuff: install packages,
-copy the python script to /usr/sbin/kamd, install the initscript to
-/etc/init.d/kam and start the service. The service will automatically start
-when the computer boots.
+Execute "setup.py install" (without quotes) as a root user. This script will
+will check if all necessary tools are installed (python3 and psutil for
+python3), copy the python script to /usr/sbin/kamd, install the initscript to
+/etc/init.d/kam. The service is NOT automatically started when installing.
+However, after the installation the script will automatically start in future
+boots. So either you reboot the server/computer or you use the command
+"service kam start" as root to start the service after installation.
 
 CONFIG FILE
 -----------
-The config file is a ini-like file. It contains 4 main sections. The config
-file is located at /etc/kam/config.cnf. When the daemon is started the first
-time and no config file exists, a default one is created.
-
-The config file:
-[general]
-	This section contains general configurations
-period = 60
-	{x seconds}
-	period is a integer value which defines the interval in which the
-	monitor tests the cpu, network and processes parameters.
-idle_time = 15
-	{x minutes}
-	The allowed idle time of the computer. When the computer is idle
-	for at least this time, the computer will execute the command defined
-	in the [idle] section
-
-[cpu]
-total_load = 10
-	{x%}
-	The total load reaches this value, the computer isn't idle.
-	Keep in mind this is a sum. So if you have 2 (virtual) cores,
-	the maximum value is 200.
-per_cpu_load = 5.0
-	{x%}
-	When at least one core reaches this load, the computer isn't idle
-	anymore.
-
-[processes]
-	Here you can define processes. When one or more of these processes
-	are running, the computer is not idle.
-processes = sshd
-	A ; separated list of processes to watch, eg:
-	sshd;vlc;telnet;ftpd
-sshd_min = 2
-	For each process defined in 'processes' you can define a minimum value.
-	This value tells how many instances of this process must run before
-	the computer is not idle. sshd for instance has always one process
-	running, so setting this value to 1 will keep your computer awake
-	forever. Setting this value to 2, the computer is only awake when
-	at least one ssh connection is running.
-	This parameter is available for each process defined in 'processes'
-	and their name is {process}_min, where {process} is replaced by
-	the process name.
-
-[network]
-download_speed = 10
-	{x KiB/s}
-	When the download speed reaches this value, the computer is not idle.
-upload_speed = 10
-	{x KiB/s}
-	When the upload speed reaches this value, the computer is not idle.
-
-addresses_connected = 
-	{list of addresses}
-	Here you can define a list of addresses. When one of these addresses are
-	connected, the server is kept alive. You define addresses using an ip address
-	and a subnet value using the following syntax:
-		a.b.c.d/subnet
-	for example:
-		192.168.0.0/24
-
-	When an address is connected in the range of 192.168.0.0 to 192.168.0.255 the
-	server is kept alive. To define a specific address you can use /32:
-		192.168.0.20/32
-	Now the server is only kept alive if the ip 192.168.0.20 is connected.
-
-	This way you can define specific computer or small ranges:
-		addresses_connected = 192.168.0.0/25,192.168.0.250/32
-	This list specifies that the server is kept alive when on of the following
-	ip's are connected:
-		192.168.0.0 - 192.168.0.127 or 192.168.0.250
-
-[idle]
-	Here you can define stuff to do when the computer is idle for
-	'idle_time' minutes.
-
-cmd = shutdown -h now
-	The command to execute when the computer is idle for 'idle_time minutes'
-	This line is executed inside a bash environment. You can execute
-	multiple command by separating them by a ';'.
+You can find up-to-date information in the example config file itself.
