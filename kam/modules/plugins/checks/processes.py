@@ -53,7 +53,7 @@ class ProcessesCheck(BaseCheck):
 		found_processes = []
 		for process in psutil.process_iter():
 			try:
-				found_processes.append(process.name)
+				found_processes.append(process.name())
 			except psutil._error.NoSuchProcess:
 				pass
 				# just ignore the error, the process is stopped between the process_iter() call and append call
@@ -130,7 +130,7 @@ class Process:
 		self._count = 0
 
 	def isProcess(self, name):
-		return self._name == name
+		return self._name.startswith(name)
 
 	def getCount(self):
 		return self._count
