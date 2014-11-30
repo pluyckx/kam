@@ -30,6 +30,7 @@ import subprocess
 
 import kam.utils.utils as utils
 from kam.utils.pollmanager import PollManager
+from kam.utils.udevmonitor import UDevMonitor
 
 from kam.modules.plugins.log.logmanager import LogManager
 from kam.modules.plugins.debugger.debugmanager import DebugManager
@@ -59,6 +60,9 @@ data_dict["config"] = CNF
 
 pollmanager = PollManager(data_dict)
 data_dict["pollmanager"] = pollmanager
+
+udevmonitor = UDevMonitor(data_dict)
+data_dict["udevmonitor"] = udevmonitor
 
 # Load all modules from a path
 # The modules must contain the function createInstance
@@ -97,6 +101,8 @@ data_dict["idle_command_callback"] = _idle_command_ran
 
 # The main function which normally never stops, unless an exception occurs
 def main():
+	udevmonitor.start()
+
 	if os.path.isfile(CNF_FILE):
 		CNF.read(CNF_FILE)
 

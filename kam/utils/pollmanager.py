@@ -44,6 +44,18 @@ class PollManager(Thread):
 			self._stop_poll = False
 			self.start()
 
+	def remove(self, fd, callback):
+		rm = []
+		for fds in self._fds:
+			(_fd, _, _callback) = fds
+			if _fd == fd and _callback == callback:
+				rm.append(fds)
+
+		for i in rm:
+			if self._debug:
+				self._debug.log(self._debug.TYPE_EXECUTE, self, "Remove", i, None, None)
+			self._fds.remove(i)
+
 	def stop(self):
 		self._stop_poll = True
 

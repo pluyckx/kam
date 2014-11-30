@@ -26,6 +26,7 @@
 # along with Keep Alive Monitor.  If not, see <http://www.gnu.org/licenses/>.
 
 from kam.modules.plugins.checks.basecheck import BaseCheck
+from threading import Lock
 
 import os
 
@@ -39,8 +40,12 @@ class KeyboardCheck(BaseCheck):
 		self._log = data_dict["log"]
 		self._pollmanager = data_dict["pollmanager"]
 		self._files = []
+		self._lock = Lock()
 
 		self._read_from = []
+
+		self._udevmonitor = data_dict["udevmonitor"]
+		self._udevmonitor.addCallback(self._udev_event)
 
 	def _run(self):
 		if len(self._read_from) > 0:
@@ -54,15 +59,41 @@ class KeyboardCheck(BaseCheck):
 		self._read_from.clear()
 
 	def _keyboardActive(self, fd, event):
+		self._lock.acquire()
 		for f in self._files:
 			if f.fileno() == fd:
-				while self._pollmanager.hasInput(f.fileno()):
-					buf = f.read1(100)
+				try:
+					while self._pollmanager.hasInput(f.fileno()):
+						buf = f.read1(100)
 
-				if not f.name in self._read_from:
-					self._read_from.append(f.name)
+					if not f.name in self._read_from:
+						self._read_from.append(f.name)
+				except:
+					# we ignore the exception for now
+					# _udev_event will get called and it will handle te removal of the device
+					# TODO: find a better solution for this
+					pass
+
+		self._lock.release()
+
+	def _udev_event(self):
+		self._lock.acquire()
+		if len(self._files) > 0:
+			for f in self._files:
+				self._pollmanager.remove(f.fileno(), self._keyboardActive)
+				try:
+					f.close()
+				except:
+					pass # when the file does not exist...
+
+			self._files = []
+
+		self._lock.release()
+
+		self.loadConfig(self._config)
 
 	def loadConfig(self, config):
+		self._config = config
 		self._keyboards = []
 		err_value = ""
 
@@ -92,12 +123,14 @@ class KeyboardCheck(BaseCheck):
 						self._keyboards.append(keyboard)
 
 		if len(self._keyboards) > 0:
+			self._lock.acquire()
 			self._enable()
 			for keyboard in self._keyboards:
 				input_path = "/dev/input/{0}".format(keyboard)
 				f = open(input_path, "rb")
 				self._files.append(f)
 				self._pollmanager.add(f.fileno(), self._keyboardActive)
+			self._lock.release()
 		else:
 			self._disable()
 

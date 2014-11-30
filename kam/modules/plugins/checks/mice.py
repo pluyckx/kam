@@ -26,6 +26,7 @@
 # along with Keep Alive Monitor.  If not, see <http://www.gnu.org/licenses/>.
 
 from kam.modules.plugins.checks.basecheck import BaseCheck
+from threading import Lock
 
 import os
 
@@ -39,8 +40,12 @@ class MiceCheck(BaseCheck):
 		self._log = data_dict["log"]
 		self._pollmanager = data_dict["pollmanager"]
 		self._files = []
+		self._lock = Lock()
 
 		self._read_from = []
+
+		self._udevmonitor = data_dict["udevmonitor"]
+		self._udevmonitor.addCallback(self._udev_event)
 
 	def _run(self):
 		if len(self._read_from) > 0:
@@ -54,15 +59,41 @@ class MiceCheck(BaseCheck):
 		self._read_from.clear()
 
 	def _mouseActive(self, fd, event):
+		self._lock.acquire()
+
 		for f in self._files:
 			if f.fileno() == fd:
-				while self._pollmanager.hasInput(f.fileno()):
-					buf = f.read1(100)
+				try:
+					while self._pollmanager.hasInput(f.fileno()):
+						buf = f.read1(100)
 
-				if not f.name in self._read_from:
-					self._read_from.append(f.name)
+					if not f.name in self._read_from:
+						self._read_from.append(f.name)
+				except:
+					# TODO: see keyboard.py check plugin
+					pass
+
+		self._lock.release()
+
+	def _udev_event(self):
+		self._lock.acquire()
+		if len(self._files) > 0:
+			for f in self._files:
+				self._pollmanager.remove(f.fileno(), self._mouseActive)
+				try:
+					f.close()
+				except:
+					pass # when the file does not exist...
+
+			self._files = []
+
+		self._lock.release()
+		self.loadConfig(self._config)
+
 
 	def loadConfig(self, config):
+		self._config = config
+
 		self._mice = []
 		err_value = ""
 
@@ -92,12 +123,14 @@ class MiceCheck(BaseCheck):
 						self._mice.append(mouse)
 
 		if len(self._mice) > 0:
+			self._lock.acquire()
 			self._enable()
 			for mouse in self._mice:
 				input_path = "/dev/input/{0}".format(mouse)
 				f = open(input_path, "rb")
 				self._files.append(f)
 				self._pollmanager.add(f.fileno(), self._mouseActive)
+			self._lock.release()
 		else:
 			self._disable()
 
