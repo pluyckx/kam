@@ -40,6 +40,7 @@ class MiceCheck(BaseCheck):
 		self._log = data_dict["log"]
 		self._pollmanager = data_dict["pollmanager"]
 		self._files = []
+		self._first_after_config = False
 
 		self._udevmonitor = data_dict["udevmonitor"]
 		self._udevmonitor.addCallback(self._udev_event)
@@ -62,7 +63,8 @@ class MiceCheck(BaseCheck):
 
 				self._files.remove(f)
 
-		if len(read_from) > 0:
+		if len(read_from) > 0 or self._first_after_config:
+			self._first_after_config = False
 			self._alive()
 		else:
 			self._dead()
@@ -120,6 +122,7 @@ class MiceCheck(BaseCheck):
 						mice.append(mouse)
 
 		if len(mice) > 0:
+			self._first_after_config = True
 			self._enable()
 			for mouse in mice:
 				input_path = "/dev/input/{0}".format(mouse)
