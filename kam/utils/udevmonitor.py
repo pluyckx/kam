@@ -11,14 +11,13 @@ class UDevMonitor(object):
 
 	def start(self):
 		self._proc = subprocess.Popen([ "udevadm", "monitor" ], stdout=subprocess.PIPE, bufsize=0)
-		self._pollmanager.add(self._proc.stdout.fileno(), self._event_received)
 
 	def addCallback(self, callback):
 		self._callbacks.append(callback)
 
-	def _event_received(self, fd, event):
-		if self._proc.stdout.fileno() == fd and self._pollmanager.hasInput(fd):
-			while self._pollmanager.hasInput(fd):
+	def check(self):
+		if self._pollmanager.hasInput(self._proc.stdout):
+			while self._pollmanager.hasInput(self._proc.stdout):
 				igonore = self._proc.stdout.read(1000)
 
 			for callback in self._callbacks:

@@ -40,46 +40,44 @@ class MiceCheck(BaseCheck):
 		self._log = data_dict["log"]
 		self._pollmanager = data_dict["pollmanager"]
 		self._files = []
-		self._lock = Lock()
-
-		self._read_from = []
 
 		self._udevmonitor = data_dict["udevmonitor"]
 		self._udevmonitor.addCallback(self._udev_event)
 
 	def _run(self):
-		if len(self._read_from) > 0:
+		read_from = []
+
+		for f in self._files:
+			try: # There is a change the file does not exist anymore!
+				if self._pollmanager.hasInput(f.fileno()):
+					self._flush_input(f)
+					read_from.append(f.name)
+			except:
+				if not os.path.exists(f.name):
+					try:
+						f.close()
+					except:
+						# TODO: propably this is not necessary, check if we should close a file that does not exist anymore.
+						pass
+
+				self._files.remove(f)
+
+		if len(read_from) > 0:
 			self._alive()
 		else:
 			self._dead()
 
 		if self._debug:
-			self._debug.log(self._debug.TYPE_CHECK, self, "read from: ", self._read_from, "", super().isAlive())
+			self._debug.log(self._debug.TYPE_CHECK, self, "read from: ", read_from, "", super().isAlive())
 
-		self._read_from.clear()
 
-	def _mouseActive(self, fd, event):
-		self._lock.acquire()
-
-		for f in self._files:
-			if f.fileno() == fd:
-				try:
-					while self._pollmanager.hasInput(f.fileno()):
-						buf = f.read1(100)
-
-					if not f.name in self._read_from:
-						self._read_from.append(f.name)
-				except:
-					# TODO: see keyboard.py check plugin
-					pass
-
-		self._lock.release()
+	def _flush_input(self, f):
+		while self._pollmanager.hasInput(f.fileno()):
+			buf = f.read1(100)
 
 	def _udev_event(self):
-		self._lock.acquire()
 		if len(self._files) > 0:
 			for f in self._files:
-				self._pollmanager.remove(f.fileno(), self._mouseActive)
 				try:
 					f.close()
 				except:
@@ -87,14 +85,12 @@ class MiceCheck(BaseCheck):
 
 			self._files = []
 
-		self._lock.release()
 		self.loadConfig(self._config)
 
 
 	def loadConfig(self, config):
 		self._config = config
 
-		self._mice = []
 		err_value = ""
 
 		try:
@@ -108,7 +104,8 @@ class MiceCheck(BaseCheck):
 			s_mice = section.get(self.CONFIG_ITEM_MICE)
 		else:
 			s_mice = None
-		
+
+		mice = []
 		if s_mice:
 			a_mice = s_mice.split(",")
 			for s_mouse in a_mice:
@@ -119,28 +116,24 @@ class MiceCheck(BaseCheck):
 					a_mouse = [ s_mouse ]
 
 				for mouse in a_mouse:
-					if not mouse in self._mice:
-						self._mice.append(mouse)
+					if not mouse in mice:
+						mice.append(mouse)
 
-		if len(self._mice) > 0:
-			self._lock.acquire()
+		if len(mice) > 0:
 			self._enable()
-			for mouse in self._mice:
+			for mouse in mice:
 				input_path = "/dev/input/{0}".format(mouse)
 				f = open(input_path, "rb")
 				self._files.append(f)
-				self._pollmanager.add(f.fileno(), self._mouseActive)
-			self._lock.release()
 		else:
 			self._disable()
 
 		if self._debug:
 			self._debug.log(self._debug.TYPE_CONFIG, self, self.CONFIG_ITEM_MICE,\
-
-			                self._mice, err_value, self.isEnabled())
+			                mice, err_value, self.isEnabled())
 
 		if self._log:
-			self._log.log(self, "Config loaded: enabled={0}; mice={1}\n".format(self.isEnabled(), self._mice))
+			self._log.log(self, "Config loaded: enabled={0}; mice={1}\n".format(self.isEnabled(), mice))
 
 	def _findMice(self):
 		mice = []

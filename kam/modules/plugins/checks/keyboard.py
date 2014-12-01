@@ -40,47 +40,46 @@ class KeyboardCheck(BaseCheck):
 		self._log = data_dict["log"]
 		self._pollmanager = data_dict["pollmanager"]
 		self._files = []
-		self._lock = Lock()
-
-		self._read_from = []
 
 		self._udevmonitor = data_dict["udevmonitor"]
 		self._udevmonitor.addCallback(self._udev_event)
 
 	def _run(self):
-		if len(self._read_from) > 0:
+		read_from = []
+
+		for f in self._files:
+			try: # There is a change the file does not exist anymore!
+				if self._pollmanager.hasInput(f.fileno()):
+					self._flush_input(f)
+					read_from.append(f.name)
+			except:
+				if not os.path.exists(f.name):
+					try:
+						f.close()
+					except:
+						# TODO: propably this is not necessary, check if we should close a file that does not exist anymore.
+						pass
+
+				self._files.remove(f)
+
+
+		if len(read_from) > 0:
 			self._alive()
 		else:
 			self._dead()
 
 		if self._debug:
-			self._debug.log(self._debug.TYPE_CHECK, self, "read from: ", self._read_from, "", super().isAlive())
+			self._debug.log(self._debug.TYPE_CHECK, self, "read from: ", read_from, "", super().isAlive())
 
-		self._read_from.clear()
 
-	def _keyboardActive(self, fd, event):
-		self._lock.acquire()
-		for f in self._files:
-			if f.fileno() == fd:
-				try:
-					while self._pollmanager.hasInput(f.fileno()):
-						buf = f.read1(100)
+	def _flush_input(self, f):
+		while self._pollmanager.hasInput(f.fileno()):
+			buf = f.read1(100)
 
-					if not f.name in self._read_from:
-						self._read_from.append(f.name)
-				except:
-					# we ignore the exception for now
-					# _udev_event will get called and it will handle te removal of the device
-					# TODO: find a better solution for this
-					pass
-
-		self._lock.release()
 
 	def _udev_event(self):
-		self._lock.acquire()
 		if len(self._files) > 0:
 			for f in self._files:
-				self._pollmanager.remove(f.fileno(), self._keyboardActive)
 				try:
 					f.close()
 				except:
@@ -88,13 +87,11 @@ class KeyboardCheck(BaseCheck):
 
 			self._files = []
 
-		self._lock.release()
 
 		self.loadConfig(self._config)
 
 	def loadConfig(self, config):
 		self._config = config
-		self._keyboards = []
 		err_value = ""
 
 		try:
@@ -108,7 +105,8 @@ class KeyboardCheck(BaseCheck):
 			s_keyboards = section.get(self.CONFIG_ITEM_KEYBOARDS)
 		else:
 			s_keyboards = None
-		
+
+		keyboards = []
 		if s_keyboards:
 			a_keyboards = s_keyboards.split(",")
 			for s_keyboard in a_keyboards:
@@ -119,27 +117,24 @@ class KeyboardCheck(BaseCheck):
 					a_keyboard = [ s_keyboard ]
 
 				for keyboard in a_keyboard:
-					if not keyboard in self._keyboards:
-						self._keyboards.append(keyboard)
+					if not keyboard in keyboards:
+						keyboards.append(keyboard)
 
-		if len(self._keyboards) > 0:
-			self._lock.acquire()
+		if len(keyboards) > 0:
 			self._enable()
-			for keyboard in self._keyboards:
+			for keyboard in keyboards:
 				input_path = "/dev/input/{0}".format(keyboard)
 				f = open(input_path, "rb")
 				self._files.append(f)
-				self._pollmanager.add(f.fileno(), self._keyboardActive)
-			self._lock.release()
 		else:
 			self._disable()
 
 		if self._debug:
 			self._debug.log(self._debug.TYPE_CONFIG, self, self.CONFIG_ITEM_KEYBOARDS,\
-			                self._keyboards, err_value, self.isEnabled())
+			                keyboards, err_value, self.isEnabled())
 
 		if self._log:
-			self._log.log(self, "Config loaded: enabled={0}; keyboards={1}\n".format(self.isEnabled(), self._keyboards))
+			self._log.log(self, "Config loaded: enabled={0}; keyboards={1}\n".format(self.isEnabled(), keyboards))
 
 	def _findKeyboards(self):
 		keyboards = []
