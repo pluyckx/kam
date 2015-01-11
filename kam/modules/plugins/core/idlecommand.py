@@ -41,6 +41,8 @@ class IdleCommand(CoreBase):
 
 		self._check_list = data_dict["checks"]
 
+		self._callback = data_dict["idle_command_callback"]
+
 		self._last_alive = time.clock_gettime(time.CLOCK_MONOTONIC)
 
 
@@ -65,6 +67,7 @@ class IdleCommand(CoreBase):
 					self._log.log(self, "No checks enable. We do not execute the idle command!")
 			else:
 				os.system(self._idle_command)
+				self._callback()
 
 		if self._log:
 			self._log.log(self, "It is now {0}, the server is alive: {1}, when the server is dead for {2} seconds, the server will shutdown".format(\

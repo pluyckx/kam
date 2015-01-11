@@ -29,6 +29,8 @@ import time
 import subprocess
 
 import kam.utils.utils as utils
+from kam.utils.pollmanager import PollManager
+from kam.utils.udevmonitor import UDevMonitor
 
 from kam.modules.plugins.log.logmanager import LogManager
 from kam.modules.plugins.debugger.debugmanager import DebugManager
@@ -44,16 +46,23 @@ from kam.modules.plugins.core.idlecommand import IdleCommand
 # correct it. This line will correct the CWD
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
-checks = []
 logmanager = LogManager()
 debugmanager = DebugManager()
+checks = []
 CNF = configparser.ConfigParser()
+idle_command_ran = False
 
 data_dict = {}
 data_dict["checks"] = checks
 data_dict["log"] = logmanager
 data_dict["debug"] = debugmanager
 data_dict["config"] = CNF
+
+pollmanager = PollManager(data_dict)
+data_dict["pollmanager"] = pollmanager
+
+udevmonitor = UDevMonitor(data_dict)
+data_dict["udevmonitor"] = udevmonitor
 
 # Load all modules from a path
 # The modules must contain the function createInstance
@@ -85,52 +94,61 @@ def loadModules(path):
 CNF_DIR = "/etc/kam/"
 CNF_FILE = os.path.join(CNF_DIR, "kam.conf")
 
-if os.path.isfile(CNF_FILE):
-	CNF.read(CNF_FILE)
+def _idle_command_ran():
+	idle_command_ran = True
 
-# load the log modules
-logs = loadModules("kam.modules.plugins.log")
-for log in logs:
-	logmanager.add(log)
-
-# load the debug modules
-debuggers = loadModules("kam.modules.plugins.debugger")
-for debugger in debuggers:
-	debugmanager.add(debugger)
-
-# load the core modules
-core = loadModules("kam.modules.plugins.core")
-
-# For now we must remove some core modules form the list and assign them to a
-# specific variable, so we can call them in the right order.
-# TODO add a system so the core modules are ordered and we just can itterate
-# the list
-
-period_sleep = None
-idle_command = None
-for core_module in core:
-	if isinstance(core_module, PeriodSleep):
-		period_sleep = core_module
-	elif isinstance(core_module, IdleCommand):
-		idle_command = core_module
-		
-
-if period_sleep:
-	core.remove(period_sleep)
-if idle_command:
-	core.remove(idle_command)
-
-# load all check modules
-checks_tmp = loadModules("kam.modules.plugins.checks")
-
-for check in checks_tmp:
-	logmanager.log("Main", "Add check to list: {0}".format(check.__class__.__name__))
-	checks.append(check)
+data_dict["idle_command_callback"] = _idle_command_ran
 
 # The main function which normally never stops, unless an exception occurs
 def main():
+	udevmonitor.start()
+
+	if os.path.isfile(CNF_FILE):
+		CNF.read(CNF_FILE)
+
+	# load the log modules
+	logs = loadModules("kam.modules.plugins.log")
+	for log in logs:
+		logmanager.add(log)
+
+	# load the debug modules
+	debuggers = loadModules("kam.modules.plugins.debugger")
+	for debugger in debuggers:
+		debugmanager.add(debugger)
+
+	# load the core modules
+	core = loadModules("kam.modules.plugins.core")
+
+	# For now we must remove some core modules form the list and assign them to a
+	# specific variable, so we can call them in the right order.
+	# TODO add a system so the core modules are ordered and we just can itterate
+	# the list
+
+	period_sleep = None
+	idle_command = None
+	for core_module in core:
+		if isinstance(core_module, PeriodSleep):
+			period_sleep = core_module
+		elif isinstance(core_module, IdleCommand):
+			idle_command = core_module
+		
+
+	if period_sleep:
+		core.remove(period_sleep)
+	if idle_command:
+		core.remove(idle_command)
+
+	# load all check modules
+	checks_tmp = loadModules("kam.modules.plugins.checks")
+
+	for check in checks_tmp:
+		logmanager.log("Main", "Add check to list: {0}".format(check.__class__.__name__))
+		checks.append(check)
+
+
 	try:
-		while True:
+		while not idle_command_ran:
+			data_dict["udevmonitor"].check()
 			for check in checks:
 				logmanager.log("Main", "Checking {0}".format(check.__class__.__name__))
 				check.check()
@@ -149,7 +167,9 @@ if __name__ == "__main__":
 			sys.exit(0) # we are the first run, we must exit
 
 		main()
+		logmanager.log("Main", "main exited -> idle command ran")
 	except OSError as e:
 		logmanager.log("Main", "Fork failed! {0}".format(str(e)))
 		sys.exit(1)
-
+	except Exception as ex:
+		raise ex
