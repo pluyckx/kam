@@ -74,10 +74,12 @@ class NetworkSpeedCheck(BaseCheck):
 			self._dead()
 
 		if self._debug:
-			self._debug.log(self._debug.TYPE_CHECK, self,\
-			                "upload_speed", up, "", up >= self._up)
-			self._debug.log(self._debug.TYPE_CHECK, self,\
-			                "download_speed", dl, "", dl >= self._down)
+			if self._up is not None:
+				self._debug.log(self._debug.TYPE_CHECK, self,\
+				                "upload_speed", up, "", up >= self._up)
+			if self._down is not None:
+				self._debug.log(self._debug.TYPE_CHECK, self,\
+			     	           "download_speed", dl, "", dl >= self._down)
 
 	def loadConfig(self, config):
 		err_value = ""
@@ -100,7 +102,7 @@ class NetworkSpeedCheck(BaseCheck):
 			err_down = down
 			self._down = None
 
-		if isinstance(down, float):
+		if isinstance(up, float):
 			self._up = up
 		else:
 			err_up = up
