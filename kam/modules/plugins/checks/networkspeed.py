@@ -67,8 +67,8 @@ class NetworkSpeedCheck(BaseCheck):
 		self._prev_down = network_dl
 		self._prev_up = network_up
 
-		if (self._down != None and dl >= self._down) or \
-		   (self._up != None and up >= self._up):
+		if (self._down is not None and dl >= self._down) or \
+		   (self._up is not None and up >= self._up):
 			self._alive()
 		else:
 			self._dead()
@@ -115,9 +115,9 @@ class NetworkSpeedCheck(BaseCheck):
 
 		if self._debug:
 			self._debug.log(self._debug.TYPE_CONFIG, self, self.CONFIG_ITEM_DOWN_SPEED,\
-			                self._down, err_value + ";" + err_down, self.isEnabled())
+			                self._down, err_value + ";" + err_down, self.isEnabled() and self._down is not None)
 			self._debug.log(self._debug.TYPE_CONFIG, self, self.CONFIG_ITEM_UP_SPEED,\
-			                self._up, err_value + ";" + err_up, self.isEnabled())
+			                self._up, err_value + ";" + err_up, self.isEnabled() and self._up is not None)
 
 
 		if self._log:
