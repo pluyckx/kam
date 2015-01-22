@@ -79,7 +79,7 @@ class NetworkSpeedCheck(BaseCheck):
 				                "upload_speed", up, "", up >= self._up)
 			if self._down is not None:
 				self._debug.log(self._debug.TYPE_CHECK, self,\
-			     	           "download_speed", dl, "", dl >= self._down)
+				                "download_speed", dl, "", dl >= self._down)
 
 	def loadConfig(self, config):
 		err_value = ""
