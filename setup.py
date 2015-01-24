@@ -10,6 +10,12 @@ class UpdateRc(install):
 		if os.path.exists("/etc/kam/kam.conf"):
 			shutil.copyfile("/etc/kam/kam.conf", "/etc/kam/kam.conf.back")
 
+		if not os.path.exists("/etc/kam"):
+			os.mkdir("/etc/kam")
+
+		shutil.copyfile("kam.conf", "/etc/kam/kam.conf")
+		shutil.copyfile("version", "/etc/kam/version")
+
 		super().run()
 
 		print("Update-rc.d")
