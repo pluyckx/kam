@@ -1,0 +1,12 @@
+[Unit]
+Description=Keep Alive Monitor
+After=udev.service
+Requires=udev.service
+
+[Service]
+Type=forking
+EnvironmentFile=/etc/kam/kam.conf
+ExecStart=/usr/bin/python3 /usr/bin/kam
+
+[Install]
+WantedBy=multi-user.target
