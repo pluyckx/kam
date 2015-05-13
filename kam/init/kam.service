@@ -6,7 +6,7 @@ Requires=udev.service
 [Service]
 Type=forking
 EnvironmentFile=/etc/kam/kam.conf
-ExecStart=/usr/bin/python3 /usr/bin/kam
+ExecStart=/usr/bin/python3 /usr/sbin/kamd
 
 [Install]
 WantedBy=multi-user.target
