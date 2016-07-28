@@ -2,3 +2,5 @@
 *.pyc
 build/
 *.swp
+kamd_*
+python*
