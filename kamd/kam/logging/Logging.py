@@ -16,5 +16,5 @@ class Logging(object):
 		out = "[DEBUG] " + obj.__name__ + ": " + msg
 
 		if self._fileLogLevel:
-			
+			pass
 

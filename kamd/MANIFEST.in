@@ -1,0 +1,2 @@
+recursive-include etc/kam *
+recursive-include bin *
