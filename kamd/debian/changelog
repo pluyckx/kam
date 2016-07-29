@@ -1,5 +1,17 @@
-kamd (2.0.0-1) xenial; urgency=medium
+kamd (2.0.0-alpha-1ubuntu2) xenial; urgency=medium
+
+  * Test with alpha
+
+ -- Philip Luyckx <philip.luyckx@gmail.com>  Thu, 28 Jul 2016 22:59:10 +0200
+
+kamd (2.0.0-alpha1-1ubuntu1) xenial; urgency=medium
+
+  * Test with alpha1
+
+ -- Philip Luyckx <philip.luyckx@gmail.com>  Thu, 28 Jul 2016 22:58:10 +0200
+
+kamd (2.0.0-alpha1-1) xenial; urgency=medium
 
   * Initial release
 
- -- Philip Luyckx <philip.luyckx@gmail.com>  Thu, 28 Jul 2016 19:42:22 +0200
+ -- Philip Luyckx <philip.luyckx@gmail.com>  Thu, 28 Jul 2016 22:56:07 +0200

@@ -10,9 +10,4 @@ setup(
 	keywords = "kam keep alive monitor",
 	url = "",
 	packages = find_packages(),
-	data_files = [
-		("/usr/share/doc/kamd/", [ "etc/kam/settings.py", "etc/kam/version" ]), # add systemd and upstart files
-		("/usr/sbin", [ "bin/kamd.py" ])
-	],
-	include_package_data=True,
 )
