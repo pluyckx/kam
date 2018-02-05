@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 )
 
 type level uint32
@@ -17,11 +18,20 @@ const (
 	Level_Debug   level = iota
 )
 
+const defaultLevel = Level_Warning
+
 type Logger struct {
 	out    io.Writer
 	level  level
 	logger *log.Logger
 	buffer bytes.Buffer
+}
+
+type FileLogger struct {
+	Logger
+
+	path string
+	file *os.File
 }
 
 type LogEntry interface {
@@ -40,11 +50,23 @@ type DefaultLogEntry struct {
 }
 
 func NewLogger(output io.Writer) *Logger {
-	logger := Logger{out: output, level: Level_Warning}
+	logger := Logger{out: output, level: defaultLevel}
 
 	logger.logger = log.New(logger.out, "", log.Ldate|log.Ltime|log.Lshortfile)
 
 	return &logger
+}
+
+func NewFileLogger(path string) (*FileLogger, error) {
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0664)
+
+	if err != nil {
+		return nil, err
+	}
+
+	logger := log.New(f, "", log.Ldate|log.Ltime|log.Lshortfile)
+
+	return &FileLogger{Logger: Logger{out: f, level: defaultLevel, logger: logger}, path: path, file: f}, nil
 }
 
 func (logger *Logger) Error(entry LogEntry) {
@@ -99,6 +121,10 @@ func (logger *Logger) Debug(entry LogEntry) {
 
 func (logger *Logger) SetLevel(level level) {
 	logger.level = level
+}
+
+func (logger *FileLogger) Close() error {
+	return logger.file.Close()
 }
 
 func (entry *DefaultLogEntry) GetModuleName() string {
