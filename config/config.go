@@ -75,3 +75,33 @@ func (section *TomlSection) GetInteger(key string) (int64, bool) {
 		return 0, false
 	}
 }
+
+func (section *TomlSection) GetStringArray(key string) ([]string, bool) {
+	if child, ok := section.sections[key]; ok {
+		interfaces, ok := child.([]interface{})
+
+		if !ok {
+			return []string{}, false
+		}
+
+		var strings []string
+
+		for _, i := range interfaces {
+			tmp, ok := i.(string)
+
+			if !ok {
+				return []string{}, false
+			}
+
+			strings = append(strings, tmp)
+		}
+
+		if !ok {
+			return []string{}, false
+		} else {
+			return strings, true
+		}
+	} else {
+		return []string{}, false
+	}
+}

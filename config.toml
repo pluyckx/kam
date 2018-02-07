@@ -1,3 +1,4 @@
 [InactiveTimeout]
 handler = "Command"
-command = "echo \"Idle\""
+command = "echo"
+parameters = ["Computer", "is idle"]

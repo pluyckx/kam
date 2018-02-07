@@ -33,6 +33,12 @@ func main() {
 	handler := eventhandlers.InactiveTimeoutCommand{}
 	if handler.LoadConfig(config) {
 		fmt.Println("Config loaded")
+
+		err := handler.Handle(eventhandlers.Event_InactiveTimeout)
+
+		if err != nil {
+			panic(err)
+		}
 	} else {
 		fmt.Println("Config load failed")
 	}

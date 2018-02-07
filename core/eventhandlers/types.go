@@ -14,5 +14,5 @@ const (
 
 type EventHandler interface {
 	LoadConfig(config *config.TomlSection) bool
-	Handle(event event) bool
+	Handle(event event) error
 }

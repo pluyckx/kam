@@ -1,6 +1,9 @@
 package eventhandlers
 
 import (
+	"os"
+	"os/exec"
+
 	"github.com/pluyckx/kam/config"
 	"github.com/pluyckx/kam/logging"
 )
@@ -8,7 +11,8 @@ import (
 type InactiveTimeoutCommand struct {
 	EventHandler
 
-	cmd string
+	cmd        string
+	parameters []string
 }
 
 func (handler *InactiveTimeoutCommand) LoadConfig(config *config.TomlSection) bool {
@@ -16,6 +20,7 @@ func (handler *InactiveTimeoutCommand) LoadConfig(config *config.TomlSection) bo
 	const handlerKey = "handler"
 	const handlerValue = "Command"
 	const commandKey = "command"
+	const parameterKey = "parameters"
 
 	logger := logging.GetLogger("")
 
@@ -33,6 +38,16 @@ func (handler *InactiveTimeoutCommand) LoadConfig(config *config.TomlSection) bo
 			if ok {
 				logger.Debug("Command loaded: '%s'", cmd)
 				handler.cmd = cmd
+
+				logger.Debug("Loading parameter if available")
+				parameters, ok := section.GetStringArray(parameterKey)
+
+				if ok {
+					logger.Debug("Parameters found: %v", parameters)
+					handler.parameters = parameters
+				} else {
+					logger.Debug("No parameters available")
+				}
 
 				return true
 			} else {
@@ -53,6 +68,14 @@ func (handler *InactiveTimeoutCommand) LoadConfig(config *config.TomlSection) bo
 	}
 }
 
-func (handler *InactiveTimeoutCommand) Handle(event event) bool {
-	return false
+func (handler *InactiveTimeoutCommand) Handle(event event) error {
+	if event == Event_InactiveTimeout {
+		cmd := exec.Command(handler.cmd, handler.parameters...)
+
+		cmd.Stdout = os.Stdout
+
+		return cmd.Run()
+	} else {
+		return nil
+	}
 }
