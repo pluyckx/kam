@@ -1,0 +1,3 @@
+[InactiveTimeout]
+handler = "Command"
+command = "echo \"Idle\""

@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"sync"
 )
 
 type level uint32
@@ -20,7 +21,17 @@ const (
 
 const defaultLevel = Level_Warning
 
-type Logger struct {
+type Logger interface {
+	Error(format string, params ...interface{})
+	Warning(format string, params ...interface{})
+	Info(format string, params ...interface{})
+	Debug(format string, params ...interface{})
+	Log(level string, format string, params ...interface{})
+	SetLevel(level level)
+	GetLevel() level
+}
+
+type BaseLogger struct {
 	out    io.Writer
 	level  level
 	logger *log.Logger
@@ -28,29 +39,61 @@ type Logger struct {
 }
 
 type FileLogger struct {
-	Logger
+	BaseLogger
 
 	path string
 	file *os.File
 }
 
-type LogEntry interface {
-	GetModuleName() string
-	GetMessage() string
+var _ Logger = (*BaseLogger)(nil)
+var _ Logger = (*FileLogger)(nil)
+
+const defaultLoggerKey = "__default__"
+
+var loggers map[string]Logger = make(map[string]Logger)
+var syncCall sync.Mutex
+
+func GetLogger(key string) Logger {
+	var logger Logger
+	var ok bool
+
+	if key == "" {
+		key = defaultLoggerKey
+	}
+
+	syncCall.Lock()
+	logger, ok = loggers[key]
+	syncCall.Unlock()
+
+	if !ok {
+		return nil
+	} else {
+		return logger
+	}
 }
 
-type DefaultLogEntry struct {
-	LogEntry
+func RegisterLogger(key string, logger Logger) bool {
+	var ret bool
 
-	ModuleName string
-	Format     string
-	Data       []interface{}
+	if key == "" {
+		key = defaultLoggerKey
+	}
 
-	buffer bytes.Buffer
+	syncCall.Lock()
+	if _, ok := loggers[key]; !ok {
+		loggers[key] = logger
+
+		ret = true
+	} else {
+		ret = false
+	}
+	syncCall.Unlock()
+
+	return ret
 }
 
-func NewLogger(output io.Writer) *Logger {
-	logger := Logger{out: output, level: defaultLevel}
+func NewLogger(output io.Writer) *BaseLogger {
+	logger := BaseLogger{out: output, level: defaultLevel}
 
 	logger.logger = log.New(logger.out, "", log.Ldate|log.Ltime|log.Lshortfile)
 
@@ -66,75 +109,70 @@ func NewFileLogger(path string) (*FileLogger, error) {
 
 	logger := log.New(f, "", log.Ldate|log.Ltime|log.Lshortfile)
 
-	return &FileLogger{Logger: Logger{out: f, level: defaultLevel, logger: logger}, path: path, file: f}, nil
+	return &FileLogger{BaseLogger: BaseLogger{out: f, level: defaultLevel, logger: logger}, path: path, file: f}, nil
 }
 
-func (logger *Logger) Error(entry LogEntry) {
-	logger.buffer.Reset()
-
-	fmt.Fprintf(&logger.buffer, "[%s - ERROR] ", entry.GetModuleName())
-	fmt.Fprint(&logger.buffer, entry.GetMessage())
-
+func (logger *BaseLogger) Error(format string, params ...interface{}) {
 	if logger.level >= Level_Error {
-		logger.logger.Print(logger.buffer.String())
-		fmt.Println(logger.buffer.String())
+		logger.Log("DEBUG", format, params...)
+	} else {
+		logger.buffer.Reset()
+
+		fmt.Fprint(&logger.buffer, "[ERROR] ")
+		fmt.Fprintf(&logger.buffer, format, params...)
 	}
 
 	panic(logger.buffer.String())
 }
 
-func (logger *Logger) Warning(entry LogEntry) {
+func (logger *BaseLogger) Warning(format string, params ...interface{}) {
 	if logger.level >= Level_Warning {
-		logger.buffer.Reset()
-
-		fmt.Fprintf(&logger.buffer, "[%s - WARNING] ", entry.GetModuleName())
-		fmt.Fprint(&logger.buffer, entry.GetMessage())
-
-		logger.logger.Print(logger.buffer.String())
-		fmt.Println(logger.buffer.String())
+		logger.Log("WARNING", format, params...)
 	}
 }
 
-func (logger *Logger) Info(entry LogEntry) {
+func (logger *BaseLogger) Info(format string, params ...interface{}) {
 	if logger.level >= Level_Info {
-		logger.buffer.Reset()
-
-		fmt.Fprintf(&logger.buffer, "[%s - INFO] ", entry.GetModuleName())
-		fmt.Fprint(&logger.buffer, entry.GetMessage())
-
-		logger.logger.Print(logger.buffer.String())
-		fmt.Println(logger.buffer.String())
+		logger.Log("INFO", format, params...)
 	}
 }
 
-func (logger *Logger) Debug(entry LogEntry) {
+func (logger *BaseLogger) Debug(format string, params ...interface{}) {
 	if logger.level >= Level_Debug {
-		logger.buffer.Reset()
-
-		fmt.Fprintf(&logger.buffer, "[%s - DEBUG] ", entry.GetModuleName())
-		fmt.Fprint(&logger.buffer, entry.GetMessage())
-
-		logger.logger.Print(logger.buffer.String())
-		fmt.Println(logger.buffer.String())
+		logger.Log("DEBUG", format, params...)
 	}
 }
 
-func (logger *Logger) SetLevel(level level) {
+func (logger *BaseLogger) Log(level string, format string, params ...interface{}) {
+	logger.buffer.Reset()
+
+	logger.buffer.WriteRune('[')
+	logger.buffer.WriteString(level)
+	logger.buffer.WriteString("] ")
+
+	fmt.Fprintf(&logger.buffer, format, params...)
+
+	logger.logger.Output(3, logger.buffer.String())
+	fmt.Println(logger.buffer.String())
+}
+
+func (logger *BaseLogger) SetLevel(level level) {
 	logger.level = level
+}
+
+func (logger *BaseLogger) GetLevel() level {
+	return logger.level
+}
+
+func (logger *FileLogger) Log(level string, format string, params ...interface{}) {
+	logger.BaseLogger.Log(level, format, params...)
+	logger.Sync()
+}
+
+func (logger *FileLogger) Sync() error {
+	return logger.file.Sync()
 }
 
 func (logger *FileLogger) Close() error {
 	return logger.file.Close()
-}
-
-func (entry *DefaultLogEntry) GetModuleName() string {
-	return entry.ModuleName
-}
-
-func (entry *DefaultLogEntry) GetMessage() string {
-	if entry.buffer.Len() == 0 {
-		fmt.Fprintf(&entry.buffer, entry.Format, entry.Data...)
-	}
-
-	return entry.buffer.String()
 }

@@ -1,26 +1,39 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 
 	"github.com/pluyckx/kam/logging"
+
+	"github.com/pluyckx/kam/config"
+	"github.com/pluyckx/kam/core/eventhandlers"
 )
 
 func main() {
-	var tmp bytes.Buffer
-	var entry logging.DefaultLogEntry
+	logger, err := logging.NewFileLogger("/tmp/kam.log")
 
-	tmp.Reset()
-	logger := logging.NewLogger(&tmp)
+	if err != nil {
+		panic(err)
+	}
 
-	logger.SetLevel(logging.Level_None)
+	logger.SetLevel(logging.Level_Debug)
 
-	entry = logging.DefaultLogEntry{ModuleName: "Main", Format: "%v"}
-	entry.Data = append(entry.Data, "test")
+	ok := logging.RegisterLogger("", logger)
 
-	logger.Error(&entry)
+	if !ok {
+		panic("Could not register logger")
+	}
 
-	fmt.Println("tmp:")
-	fmt.Println(tmp.String())
+	config, err := config.LoadFile("config.toml")
+
+	if err != nil {
+		panic(err)
+	}
+
+	handler := eventhandlers.InactiveTimeoutCommand{}
+	if handler.LoadConfig(config) {
+		fmt.Println("Config loaded")
+	} else {
+		fmt.Println("Config load failed")
+	}
 }
