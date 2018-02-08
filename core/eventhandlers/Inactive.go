@@ -16,9 +16,9 @@ type InactiveTimeoutCommand struct {
 }
 
 func (handler *InactiveTimeoutCommand) LoadConfig(config *config.TomlSection) bool {
-	const sectionKey = "InactiveTimeout"
+	const sectionKey = "inactivetimeout"
 	const handlerKey = "handler"
-	const handlerValue = "Command"
+	const handlerValue = "command"
 	const commandKey = "command"
 	const parameterKey = "parameters"
 

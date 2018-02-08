@@ -1,4 +1,7 @@
-[InactiveTimeout]
-handler = "Command"
+
+[eventhandler]
+
+[eventhandler.inactivetimeout]
+handler = "command"
 command = "echo"
 parameters = ["Computer", "is idle"]

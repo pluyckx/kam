@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 
+	"github.com/pluyckx/kam/core/eventhandlers"
 	"github.com/pluyckx/kam/logging"
 
 	"github.com/pluyckx/kam/config"
-	"github.com/pluyckx/kam/core/eventhandlers"
 )
 
 func main() {
@@ -30,8 +30,15 @@ func main() {
 		panic(err)
 	}
 
+	eventhandlersSection := config.Section("eventhandler")
+
+	if eventhandlersSection == nil {
+		panic("Section 'eventhandler' not found in config.")
+	}
+
 	handler := eventhandlers.InactiveTimeoutCommand{}
-	if handler.LoadConfig(config) {
+
+	if handler.LoadConfig(eventhandlersSection) {
 		fmt.Println("Config loaded")
 
 		err := handler.Handle(eventhandlers.Event_InactiveTimeout)
