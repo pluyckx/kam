@@ -1,4 +1,13 @@
 
+[plugins]
+
+[plugins.psutil]
+
+[plugins.psutil.cpu]
+enabled = true
+per_cpu_threshold = 0.2
+total_cpu_threshold = 1.0
+
 [eventhandler]
 
 [eventhandler.inactivetimeout]

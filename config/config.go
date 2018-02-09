@@ -76,6 +76,26 @@ func (section *TomlSection) GetInteger(key string) (int64, bool) {
 	}
 }
 
+func (section *TomlSection) GetFloat(key string) (float64, bool) {
+	if child, ok := section.sections[key]; ok {
+		value, ok := child.(float64)
+
+		return value, ok
+	} else {
+		return 0.0, false
+	}
+}
+
+func (section *TomlSection) GetBool(key string) (bool, bool) {
+	if child, ok := section.sections[key]; ok {
+		value, ok := child.(bool)
+
+		return value, ok
+	} else {
+		return false, false
+	}
+}
+
 func (section *TomlSection) GetStringArray(key string) ([]string, bool) {
 	if child, ok := section.sections[key]; ok {
 		interfaces, ok := child.([]interface{})

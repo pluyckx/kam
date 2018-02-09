@@ -114,7 +114,7 @@ func NewFileLogger(path string) (*FileLogger, error) {
 
 func (logger *BaseLogger) Error(format string, params ...interface{}) {
 	if logger.level >= Level_Error {
-		logger.Log("DEBUG", format, params...)
+		logger.Log("Error", format, params...)
 	} else {
 		logger.buffer.Reset()
 

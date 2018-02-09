@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
-
-	"github.com/pluyckx/kam/core/eventhandlers"
+	"github.com/pluyckx/kam/core/plugins"
 	"github.com/pluyckx/kam/logging"
 
 	"github.com/pluyckx/kam/config"
@@ -30,23 +28,17 @@ func main() {
 		panic(err)
 	}
 
-	eventhandlersSection := config.Section("eventhandler")
+	pluginsSection := config.Section("plugins")
 
-	if eventhandlersSection == nil {
-		panic("Section 'eventhandler' not found in config.")
+	if pluginsSection == nil {
+		panic("No plugins section found")
 	}
 
-	handler := eventhandlers.InactiveTimeoutCommand{}
+	p := plugins.PsutilsCpu{}
 
-	if handler.LoadConfig(eventhandlersSection) {
-		fmt.Println("Config loaded")
-
-		err := handler.Handle(eventhandlers.Event_InactiveTimeout)
-
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		fmt.Println("Config load failed")
+	if !p.LoadConfig(pluginsSection) {
+		logger.Error("Failed to load config file")
 	}
+
+	p.DoWork()
 }
