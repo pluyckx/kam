@@ -41,7 +41,7 @@ func (psutilscpu *PsutilsCpu) DoWork() {
 		if v >= psutilscpu.per_cpu_threshold {
 			psutilscpu.active = true
 
-			logger.Info("Cpu usage >= %f", psutilscpu.per_cpu_threshold)
+			logger.Info("Cpu usage: %f >= %f", v, psutilscpu.per_cpu_threshold)
 		}
 
 		total += v
@@ -49,7 +49,7 @@ func (psutilscpu *PsutilsCpu) DoWork() {
 
 	if total >= psutilscpu.total_threshold {
 		psutilscpu.active = true
-		logger.Info("Total cpu usage >= %f", psutilscpu.total_threshold)
+		logger.Info("Total cpu usage: %f >= %f", total, psutilscpu.total_threshold)
 	}
 }
 
@@ -64,13 +64,11 @@ func (psutilscpu *PsutilsCpu) LoadConfig(config *config.TomlSection) bool {
 
 	logger := logging.GetLogger("")
 
-	tmp, err := cpu.Counts(true)
+	cpuCount, err := cpu.Counts(true)
 
 	if err != nil {
 		logger.Error("%s", err)
 	}
-
-	maxTotalThreshold := float64(tmp)
 
 	logger.Debug("Loading global section '%s'", psutilsSectionKey)
 	psutilsSection := config.Section(psutilsSectionKey)
@@ -100,16 +98,17 @@ func (psutilscpu *PsutilsCpu) LoadConfig(config *config.TomlSection) bool {
 		return true
 	}
 
-	psutilscpu.total_threshold, ok = cpuSection.GetFloat(totalThresholdKey)
+	tmp, ok := cpuSection.GetFloat(totalThresholdKey)
 
 	if !ok {
 		logger.Debug("'%s' not found or it contains an invalid value (float expected)", totalThresholdKey)
 	} else {
-		if psutilscpu.total_threshold > maxTotalThreshold {
-			logger.Debug("Too high value (%f) for '%s'. Max allowed is %f", psutilscpu.total_threshold, totalThresholdKey, maxTotalThreshold)
+		if tmp > 1.0 {
+			logger.Debug("Too high value (%f) for '%s'. Max allowed is %f", tmp, totalThresholdKey, 1.0)
 			psutilscpu.total_threshold = 0.0
 		} else {
-			logger.Debug("'%s' = %f", totalThresholdKey, psutilscpu.total_threshold)
+			psutilscpu.total_threshold = tmp * float64(cpuCount)
+			logger.Debug("'%s' = %f, #cpu = %d --> %f used for %s", totalThresholdKey, tmp, cpuCount, psutilscpu.total_threshold, totalThresholdKey)
 		}
 	}
 

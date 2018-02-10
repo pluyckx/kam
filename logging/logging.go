@@ -31,6 +31,9 @@ type Logger interface {
 	GetLevel() level
 }
 
+type NullLogger struct {
+}
+
 type BaseLogger struct {
 	out    io.Writer
 	level  level
@@ -47,6 +50,7 @@ type FileLogger struct {
 
 var _ Logger = (*BaseLogger)(nil)
 var _ Logger = (*FileLogger)(nil)
+var nullLogger Logger = &NullLogger{}
 
 const defaultLoggerKey = "__default__"
 
@@ -66,7 +70,7 @@ func GetLogger(key string) Logger {
 	syncCall.Unlock()
 
 	if !ok {
-		return nil
+		return nullLogger
 	} else {
 		return logger
 	}
@@ -110,6 +114,10 @@ func NewFileLogger(path string) (*FileLogger, error) {
 	logger := log.New(f, "", log.Ldate|log.Ltime|log.Lshortfile)
 
 	return &FileLogger{BaseLogger: BaseLogger{out: f, level: defaultLevel, logger: logger}, path: path, file: f}, nil
+}
+
+func IsNullLogger(logger Logger) bool {
+	return logger == nullLogger
 }
 
 func (logger *BaseLogger) Error(format string, params ...interface{}) {
@@ -175,4 +183,27 @@ func (logger *FileLogger) Sync() error {
 
 func (logger *FileLogger) Close() error {
 	return logger.file.Close()
+}
+
+func (logger *NullLogger) Error(format string, params ...interface{}) {
+}
+
+func (logger *NullLogger) Warning(format string, params ...interface{}) {
+}
+
+func (logger *NullLogger) Info(format string, params ...interface{}) {
+}
+
+func (logger *NullLogger) Debug(format string, params ...interface{}) {
+}
+
+func (logger *NullLogger) Log(level string, format string, params ...interface{}) {
+
+}
+
+func (logger *NullLogger) SetLevel(level level) {
+}
+
+func (logger *NullLogger) GetLevel() level {
+	return Level_None
 }
