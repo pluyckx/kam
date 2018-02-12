@@ -1,4 +1,4 @@
-package eventhandlers
+package inactivetimeout
 
 import (
 	"os"

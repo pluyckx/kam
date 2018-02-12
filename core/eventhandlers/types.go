@@ -4,15 +4,15 @@ import (
 	"github.com/pluyckx/kam/config"
 )
 
-type event int32
+type Event int32
 
 const (
-	Event_Inactive        event = iota
-	Event_InactiveTimeout event = iota
-	Event_Active          event = iota
+	Event_Inactive        Event = iota
+	Event_InactiveTimeout Event = iota
+	Event_Active          Event = iota
 )
 
 type EventHandler interface {
 	LoadConfig(config *config.TomlSection) bool
-	Handle(event event) error
+	Handle(event Event) error
 }

@@ -1,15 +1,16 @@
-package eventhandlers
+package inactivetimeout
 
 import (
 	"os"
 	"os/exec"
 
 	"github.com/pluyckx/kam/config"
+	"github.com/pluyckx/kam/core/eventhandlers"
 	"github.com/pluyckx/kam/logging"
 )
 
 type InactiveTimeoutCommand struct {
-	EventHandler
+	eventhandlers.EventHandler
 
 	cmd        string
 	parameters []string
@@ -65,8 +66,8 @@ func (handler *InactiveTimeoutCommand) LoadConfig(config *config.TomlSection) bo
 	}
 }
 
-func (handler *InactiveTimeoutCommand) Handle(event event) error {
-	if event == Event_InactiveTimeout {
+func (handler *InactiveTimeoutCommand) Handle(event eventhandlers.Event) error {
+	if event == eventhandlers.Event_InactiveTimeout {
 		cmd := exec.Command(handler.cmd, handler.parameters...)
 
 		cmd.Stdout = os.Stdout
