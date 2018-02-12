@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/pluyckx/kam/core/plugins"
+	"github.com/pluyckx/kam/core/schedulers"
 	"github.com/pluyckx/kam/logging"
 
 	"github.com/pluyckx/kam/config"
@@ -28,17 +28,17 @@ func main() {
 		panic(err)
 	}
 
-	pluginsSection := config.Section("plugins")
+	section := config.Section("scheduler")
 
-	if pluginsSection == nil {
-		panic("No plugins section found")
+	if section == nil {
+		logger.Error("No scheduler section found")
 	}
 
-	p := plugins.PsutilsCpu{}
+	batch := schedulers.Batch{}
 
-	if !p.LoadConfig(pluginsSection) {
-		logger.Error("Failed to load config file")
+	if !batch.LoadConfig(section) {
+		logger.Error("Fault parsing config")
 	}
 
-	p.DoWork()
+	batch.DoCycle()
 }

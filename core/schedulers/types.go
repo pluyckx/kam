@@ -7,7 +7,6 @@ import (
 
 type Scheduler interface {
 	LoadConfig(config *config.TomlSection) bool
-	AddPlugin(plugin *plugins.Plugin)
+	SetPlugins(plugins []plugins.Plugin)
 	DoCycle()
-	HasActivePlugin() bool
 }
