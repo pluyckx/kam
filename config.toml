@@ -12,7 +12,7 @@
 
 [eventhandler]
     [eventhandler.inactivetimeout]
-        exit_kam = false
+        die_on_inactive = false
 
         [eventhandler.inactivetimeout.command]
             command = "echo"
