@@ -7,17 +7,17 @@ import (
 )
 
 type Batch struct {
-	plugins []plugins.Plugin
+	pluginManager *plugins.Manager
 
 	interval uint32
 }
 
-func (batch *Batch) SetPlugins(plugins []plugins.Plugin) {
-	batch.plugins = plugins
+func (batch *Batch) SetPluginManager(manager *plugins.Manager) {
+	batch.pluginManager = manager
 }
 
 func (batch *Batch) DoCycle() {
-	for _, plugin := range batch.plugins {
+	for _, plugin := range batch.pluginManager.GetPlugins() {
 		plugin.DoWork()
 	}
 }
