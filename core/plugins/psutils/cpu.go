@@ -1,4 +1,4 @@
-package plugins
+package psutils
 
 import (
 	"github.com/pluyckx/kam/config"
