@@ -42,6 +42,8 @@ func (psutilscpu *PsutilsCpu) DoWork() {
 			psutilscpu.active = true
 
 			logger.Info("Cpu usage: %f >= %f", v, psutilscpu.per_cpu_threshold)
+		} else {
+			logger.Debug("Cpu usage: %f < %f", v, psutilscpu.per_cpu_threshold)
 		}
 
 		total += v
@@ -50,6 +52,8 @@ func (psutilscpu *PsutilsCpu) DoWork() {
 	if total >= psutilscpu.total_threshold {
 		psutilscpu.active = true
 		logger.Info("Total cpu usage: %f >= %f", total, psutilscpu.total_threshold)
+	} else {
+		logger.Debug("Total cpu usage: %f < %f", total, psutilscpu.total_threshold)
 	}
 }
 
@@ -103,8 +107,8 @@ func (psutilscpu *PsutilsCpu) LoadConfig(config *config.TomlSection) bool {
 	if !ok {
 		logger.Debug("'%s' not found or it contains an invalid value (float expected)", totalThresholdKey)
 	} else {
-		if tmp > 1.0 {
-			logger.Debug("Too high value (%f) for '%s'. Max allowed is %f", tmp, totalThresholdKey, 1.0)
+		if tmp > 100.0 {
+			logger.Debug("Too high value (%f) for '%s'. Max allowed is %f", tmp, totalThresholdKey, 100.0)
 			psutilscpu.total_threshold = 0.0
 		} else {
 			psutilscpu.total_threshold = tmp * float64(cpuCount)
@@ -117,8 +121,8 @@ func (psutilscpu *PsutilsCpu) LoadConfig(config *config.TomlSection) bool {
 	if !ok {
 		logger.Debug("'%s' not found or it contains an invalid value (float expected)", perCpuThresholdKey)
 	} else {
-		if psutilscpu.per_cpu_threshold > 1.0 {
-			logger.Debug("Too high value (%f) for '%s'. Max allowed is %f", psutilscpu.per_cpu_threshold, perCpuThresholdKey, 1.0)
+		if psutilscpu.per_cpu_threshold > 100.0 {
+			logger.Debug("Too high value (%f) for '%s'. Max allowed is %f", psutilscpu.per_cpu_threshold, perCpuThresholdKey, 100.0)
 			psutilscpu.per_cpu_threshold = 0.0
 		} else {
 			logger.Debug("'%s' = %f", perCpuThresholdKey, psutilscpu.per_cpu_threshold)

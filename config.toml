@@ -1,18 +1,19 @@
 
 [scheduler]
     [scheduler.batch]
-        interval = 60
+        interval = 5
 
 [plugins]
     [plugins.psutil]
         [plugins.psutil.cpu]
             enabled = true
-            per_cpu_threshold = 0.2
-            total_cpu_threshold = 0.25
+            per_cpu_threshold = 20.0
+            total_cpu_threshold = 25.0
 
 [eventhandler]
     [eventhandler.inactivetimeout]
         die_on_inactive = false
+        inactive_timeout = 30
 
         [eventhandler.inactivetimeout.command]
             command = "echo"

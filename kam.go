@@ -1,6 +1,12 @@
 package main
 
 import (
+	"time"
+
+	"github.com/pluyckx/kam/core/eventhandlers"
+
+	"github.com/pluyckx/kam/core/eventhandlers/inactivetimeout"
+	"github.com/pluyckx/kam/core/plugins"
 	"github.com/pluyckx/kam/core/schedulers"
 	"github.com/pluyckx/kam/logging"
 
@@ -28,17 +34,39 @@ func main() {
 		panic(err)
 	}
 
-	section := config.Section("scheduler")
+	scheduler := schedulers.Batch{}
+	scheduler.LoadConfig(config.Section("scheduler"))
 
-	if section == nil {
-		logger.Error("No scheduler section found")
+	pluginsManager := plugins.Manager{}
+	pluginsManager.LoadPlugins(config)
+
+	inactiveTimeoutManager := inactivetimeout.Manager{}
+	inactiveTimeoutManager.LoadConfig(config.Section("eventhandler"))
+	inactiveTimeoutManager.LoadHandlers(config.Section("eventhandler"))
+
+	scheduler.SetPluginManager(&pluginsManager)
+
+	lastActive := time.Now()
+	isInactive := false
+
+	for (!inactiveTimeoutManager.DieOnInactive()) || (!inactiveTimeoutManager.IsInactive(lastActive)) {
+		scheduler.DoCycle()
+
+		if pluginsManager.HasActive() {
+			logger.Info("Device is alive")
+			lastActive = time.Now()
+			isInactive = false
+		} else {
+			logger.Info("Device is inactive for %f", float64(time.Since(lastActive)))
+
+			if inactiveTimeoutManager.IsInactive(lastActive) {
+
+				if !isInactive {
+					inactiveTimeoutManager.HandleEvent(eventhandlers.Event_InactiveTimeout)
+				}
+
+				isInactive = true
+			}
+		}
 	}
-
-	batch := schedulers.Batch{}
-
-	if !batch.LoadConfig(section) {
-		logger.Error("Fault parsing config")
-	}
-
-	batch.DoCycle()
 }

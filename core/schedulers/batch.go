@@ -1,6 +1,9 @@
 package schedulers
 
 import (
+	"math"
+	"time"
+
 	"github.com/pluyckx/kam/config"
 	"github.com/pluyckx/kam/core/plugins"
 	"github.com/pluyckx/kam/logging"
@@ -9,7 +12,8 @@ import (
 type Batch struct {
 	pluginManager *plugins.Manager
 
-	interval uint32
+	interval  uint32
+	lastCycle time.Time
 }
 
 func (batch *Batch) SetPluginManager(manager *plugins.Manager) {
@@ -17,6 +21,15 @@ func (batch *Batch) SetPluginManager(manager *plugins.Manager) {
 }
 
 func (batch *Batch) DoCycle() {
+	logger := logging.GetLogger("")
+
+	delay := batch.lastCycle.Sub(time.Now())
+	delay += time.Duration(batch.interval) * time.Second
+
+	logger.Info("Sleeping for %f seconds", math.Floor(float64(delay)+0.5))
+	time.Sleep(delay)
+
+	batch.lastCycle = time.Now()
 	for _, plugin := range batch.pluginManager.GetPlugins() {
 		plugin.DoWork()
 	}
