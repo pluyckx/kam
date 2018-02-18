@@ -1,0 +1,80 @@
+
+@startuml
+
+namespace core {
+
+    namespace eventhandlers {
+        enum Event {
+            Event_Inactive
+            Event_InactiveTimeout
+            Event_Active
+        }
+
+        interface EventHandler {
+            LoadConfig(config: *core.config.TomlSection) bool
+            Handle(event: Event) error
+        }
+
+        class Manager {
+            - handlers: []EventHandler
+
+            + LoadHandlers(config: *config.TomlSection) bool
+            + Handle(event: Event)
+        }
+
+        namespace inactivetimeout {
+            core.eventhandlers.EventHandler <|-- Command
+
+            class Command {
+                - cmd: string
+                - parameters: []string
+            }
+        }
+    }
+
+    namespace schedulers {
+        Scheduler <|-- Batch
+
+        interface Scheduler {
+            LoadConfig(config: *config.TomlSection) bool
+            SetPlugins(plugins: *core.plugins.Manager)
+            DoCycle()
+        }
+
+        class Batch {
+            - pluginManager: *core.plugins.Manager
+            - interval: uint32
+            - lastCycle: time.Time
+        }
+    }
+
+    namespace plugins {
+
+        interface Plugin {
+            LoadConfig(config: *config.TomlSection) bool
+            DoWork()
+            IsActive() bool
+        }
+
+        class Manager {
+            - plugins: []Plugin
+
+            + GetPlugins() : []Plugin
+            + HasActive(): bool
+            + LoadPlugins(config: *config.TomlSection) bool
+        }
+
+        namespace psutils {
+            core.plugins.Plugin <|-- Cpu
+
+            class Cpu {
+                - enabled: bool
+                - active: bool
+                - total_threshold: float64
+                - per_cpu_threshold: float64
+            }
+        }
+    }
+}
+
+@enduml
