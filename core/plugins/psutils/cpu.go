@@ -6,7 +6,7 @@ import (
 	"github.com/shirou/gopsutil/cpu"
 )
 
-type PsutilsCpu struct {
+type Cpu struct {
 	enabled bool
 	active  bool
 
@@ -14,11 +14,11 @@ type PsutilsCpu struct {
 	per_cpu_threshold float64
 }
 
-func (psutilscpu *PsutilsCpu) IsActive() bool {
+func (psutilscpu *Cpu) IsActive() bool {
 	return psutilscpu.active
 }
 
-func (psutilscpu *PsutilsCpu) DoWork() {
+func (psutilscpu *Cpu) DoWork() {
 	logger := logging.GetLogger("")
 
 	if !psutilscpu.enabled {
@@ -57,7 +57,7 @@ func (psutilscpu *PsutilsCpu) DoWork() {
 	}
 }
 
-func (psutilscpu *PsutilsCpu) LoadConfig(config *config.TomlSection) bool {
+func (psutilscpu *Cpu) LoadConfig(config *config.TomlSection) bool {
 	const psutilsSectionKey = "psutil"
 	const cpuSectionKey = "cpu"
 	const enabledKey = "enabled"
@@ -137,7 +137,7 @@ func (psutilscpu *PsutilsCpu) LoadConfig(config *config.TomlSection) bool {
 	return true
 }
 
-func (psutilsCpu *PsutilsCpu) logConfig() {
+func (psutilsCpu *Cpu) logConfig() {
 	logger := logging.GetLogger("")
 
 	if logger != nil {
