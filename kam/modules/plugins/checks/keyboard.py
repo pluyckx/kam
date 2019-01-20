@@ -40,6 +40,7 @@ class KeyboardCheck(BaseCheck):
 		self._log = data_dict["log"]
 		self._pollmanager = data_dict["pollmanager"]
 		self._files = []
+		self._keyboards = []
 		self._first_after_config = False
 
 		self._udevmonitor = data_dict["udevmonitor"]
@@ -76,20 +77,10 @@ class KeyboardCheck(BaseCheck):
 
 	def _flush_input(self, f):
 		while self._pollmanager.hasInput(f.fileno()):
-			buf = f.read1(100)
+			_ = f.read1(100)
 
 
 	def _udev_event(self):
-		if len(self._files) > 0:
-			for f in self._files:
-				try:
-					f.close()
-				except:
-					pass # when the file does not exist...
-
-			self._files = []
-
-
 		self.loadConfig(self._config)
 
 	def loadConfig(self, config):
@@ -124,11 +115,23 @@ class KeyboardCheck(BaseCheck):
 
 		if len(keyboards) > 0:
 			self._enable()
-			self._first_after_config = True
-			for keyboard in keyboards:
-				input_path = "/dev/input/{0}".format(keyboard)
-				f = open(input_path, "rb")
-				self._files.append(f)
+
+			if self._newKeyboardsFound(keyboards):
+				self._first_after_config = True
+
+				for f in self._files:
+					try:
+						f.close()
+					except:
+						pass
+
+				self._keyboards = keyboards
+				self._files = []
+
+				for keyboard in keyboards:
+					input_path = "/dev/input/{0}".format(keyboard)
+					f = open(input_path, "rb")
+					self._files.append(f)
 		else:
 			self._disable()
 
@@ -137,7 +140,7 @@ class KeyboardCheck(BaseCheck):
 			                keyboards, err_value, self.isEnabled())
 
 		if self._log:
-			self._log.log(self, "Config loaded: enabled={0}; keyboards={1}\n".format(self.isEnabled(), keyboards))
+			self._log.log(self, "Config loaded: enabled={0}; trigger_alive={2}; keyboards={1}\n".format(self.isEnabled(), keyboards, self._first_after_config))
 
 	def _findKeyboards(self):
 		keyboards = []
@@ -155,6 +158,18 @@ class KeyboardCheck(BaseCheck):
 						keyboards.append(event)
 
 		return keyboards
+
+
+	def _newKeyboardsFound(self, newKeyboards):
+		for keyboard in self._keyboards:
+			if keyboard not in newKeyboards:
+				return True
+
+		for keyboard in newKeyboards:
+			if keyboard not in self._keyboards:
+				return True
+
+		return False
 
 
 def createInstance(data_dict):

@@ -40,6 +40,7 @@ class MiceCheck(BaseCheck):
 		self._log = data_dict["log"]
 		self._pollmanager = data_dict["pollmanager"]
 		self._files = []
+		self._mice = []
 		self._first_after_config = False
 
 		self._udevmonitor = data_dict["udevmonitor"]
@@ -75,18 +76,9 @@ class MiceCheck(BaseCheck):
 
 	def _flush_input(self, f):
 		while self._pollmanager.hasInput(f.fileno()):
-			buf = f.read1(100)
+			_ = f.read1(100)
 
 	def _udev_event(self):
-		if len(self._files) > 0:
-			for f in self._files:
-				try:
-					f.close()
-				except:
-					pass # when the file does not exist...
-
-			self._files = []
-
 		self.loadConfig(self._config)
 
 
@@ -122,12 +114,24 @@ class MiceCheck(BaseCheck):
 						mice.append(mouse)
 
 		if len(mice) > 0:
-			self._first_after_config = True
 			self._enable()
-			for mouse in mice:
-				input_path = "/dev/input/{0}".format(mouse)
-				f = open(input_path, "rb")
-				self._files.append(f)
+
+			if self._newMiceFound(mice):
+				self._first_after_config = True
+					
+				for f in self._files:
+					try:
+						f.close()
+					except:
+						pass
+
+				self._mice = mice
+				self._files = []
+
+				for mouse in mice:
+					input_path = "/dev/input/{0}".format(mouse)
+					f = open(input_path, "rb")
+					self._files.append(f)
 		else:
 			self._disable()
 
@@ -136,7 +140,7 @@ class MiceCheck(BaseCheck):
 			                mice, err_value, self.isEnabled())
 
 		if self._log:
-			self._log.log(self, "Config loaded: enabled={0}; mice={1}\n".format(self.isEnabled(), mice))
+			self._log.log(self, "Config loaded: enabled={0}; trigger_alive={2}; mice={1}\n".format(self.isEnabled(), mice, self._first_after_config))
 
 	def _findMice(self):
 		mice = []
@@ -154,6 +158,17 @@ class MiceCheck(BaseCheck):
 						mice.append(event)
 
 		return mice
+
+	def _newMiceFound(self, newMice):
+		for mouse in self._mice:
+			if mouse not in newMice:
+				return True
+
+		for mouse in newMice:
+			if mouse not in self._mice:
+				return True
+
+		return False
 
 
 def createInstance(data_dict):
